@@ -1,0 +1,8 @@
+{
+  "name": "AKSHARA LIFESTYLE",
+  "description": "Contemporary Indian affordable luxury multi-category e-commerce destination across fashion, jewellery, beauty, home décor, electronics, and leather accessories.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
