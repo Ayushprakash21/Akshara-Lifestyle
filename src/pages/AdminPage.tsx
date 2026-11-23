@@ -43,7 +43,7 @@ const ADMIN_NAV: { key: AdminModuleKey; label: string; icon: React.ComponentType
 ];
 
 export function AdminPage() {
-  const { currentUser, login, logout } = useCommerce();
+  const { currentUser, login, logout, isFirebaseLive } = useCommerce();
   const [activeModule, setActiveModule] = useState<AdminModuleKey>('overview');
   const [email, setEmail] = useState('admin@akshara.demo');
   const [password, setPassword] = useState('admin123');
@@ -53,7 +53,10 @@ export function AdminPage() {
 
   const hasAdminAccess =
     currentUser &&
-    (currentUser.role === 'admin' ||
+    (currentUser.role === 'super_admin' ||
+      currentUser.role === 'admin' ||
+      currentUser.role === 'product_manager' ||
+      currentUser.role === 'order_manager' ||
       currentUser.role === 'merchandiser' ||
       currentUser.role === 'operations');
 
@@ -83,9 +86,9 @@ export function AdminPage() {
           )}
 
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              const res = login(email, password);
+              const res = await login(email, password);
               if (!res.ok) {
                 setError(res.error ?? 'Authentication failed.');
               } else if (res.user?.role === 'customer') {
@@ -198,7 +201,9 @@ export function AdminPage() {
             <span className="text-[#171717] font-medium">{currentNavItem.label}</span>
           </div>
           <div className="flex items-center gap-4 text-xs">
-            <span className="text-[#9A7A45] font-mono uppercase">Demo Mode Storage</span>
+            <span className="text-[#9A7A45] font-mono uppercase">
+              {isFirebaseLive ? 'Firebase Firestore Live' : 'Demo Mode Storage'}
+            </span>
             <Link
               to="/"
               className="px-3.5 py-2 border border-[#171717] text-[#171717] uppercase tracking-[0.12em] whitespace-nowrap"

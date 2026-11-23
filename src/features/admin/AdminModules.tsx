@@ -880,9 +880,9 @@ export function AdminModuleContent({ activeModule }: { activeModule: AdminModule
         className="bg-white border border-[#E9E1D5] p-6 space-y-5 max-w-2xl"
       >
         <h2 className="font-editorial text-3xl text-[#171717]">Payment & GST Configuration</h2>
-        <p className="text-xs text-[#85817B]">
+        <p className="text-xs text-[#85817B] leading-relaxed">
           Current Gateway Adapter: <span className="font-mono text-[#171717]">{integrationStatus.paymentGateway}</span>.
-          Live Razorpay transactions require server-side secret keys configured in environment variables.
+          Razorpay integration architecture is prepared and deferred (PAYMENTS_ENABLED=false). Checkout operates safely in honest demo mode without simulating real bank payments or exposing private credentials.
         </p>
 
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
@@ -995,7 +995,13 @@ export function AdminModuleContent({ activeModule }: { activeModule: AdminModule
   }
 
   // Roles & Integration Readiness
-  const roles: UserRole[] = ['customer', 'merchandiser', 'operations', 'admin'];
+  const roles: { value: UserRole; label: string }[] = [
+    { value: 'customer', label: 'Customer' },
+    { value: 'product_manager', label: 'Product Manager' },
+    { value: 'order_manager', label: 'Order Manager' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'super_admin', label: 'Super Admin' },
+  ];
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -1022,8 +1028,8 @@ export function AdminModuleContent({ activeModule }: { activeModule: AdminModule
                       className="bg-[#F7F4EE] border border-[#D9D0C2] px-2.5 py-1.5 text-xs uppercase"
                     >
                       {roles.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
+                        <option key={r.value} value={r.value}>
+                          {r.label}
                         </option>
                       ))}
                     </select>

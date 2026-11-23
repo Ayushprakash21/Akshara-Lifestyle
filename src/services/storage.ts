@@ -1,4 +1,4 @@
-const STORAGE_PREFIX = 'akshara_lifestyle_v1_';
+const STORAGE_PREFIX = 'akshara_lifestyle_v2_';
 
 export function readStorage<T>(key: string, fallback: T): T {
   try {

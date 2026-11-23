@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowRight, ShieldCheck, SlidersHorizontal, Watch, X } from 'lucide-react';
 import type { CategorySlug, FilterState } from '../types/commerce';
 import { useCommerce } from '../store/CommerceContext';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
@@ -22,6 +22,11 @@ const DEFAULT_FILTERS: FilterState = {
   minDiscount: 0,
   newArrivalsOnly: false,
   sortBy: 'recommended',
+  movements: [],
+  dialColors: [],
+  strapMaterials: [],
+  caseMaterials: [],
+  watchStyles: [],
 };
 
 export function CatalogPage({ mode = 'shop' }: { mode?: 'shop' | 'category' | 'search' }) {
@@ -91,7 +96,32 @@ export function CatalogPage({ mode = 'shop' }: { mode?: 'shop' | 'category' | 's
         scopedCatalog.flatMap((p) => p.variants.map((v) => v.size).filter(Boolean) as string[]),
       ),
     );
-    return { brands, colors, sizes };
+    const movements = Array.from(
+      new Set(scopedCatalog.map((p) => p.movement).filter(Boolean) as string[]),
+    ).sort();
+    const dialColors = Array.from(
+      new Set(scopedCatalog.map((p) => p.dialColor).filter(Boolean) as string[]),
+    ).sort();
+    const strapMaterials = Array.from(
+      new Set(scopedCatalog.map((p) => p.strapMaterial).filter(Boolean) as string[]),
+    ).sort();
+    const caseMaterials = Array.from(
+      new Set(scopedCatalog.map((p) => p.caseMaterial).filter(Boolean) as string[]),
+    ).sort();
+    const watchStyles = Array.from(
+      new Set(scopedCatalog.map((p) => p.watchStyle).filter(Boolean) as string[]),
+    ).sort();
+
+    return {
+      brands,
+      colors,
+      sizes,
+      movements,
+      dialColors,
+      strapMaterials,
+      caseMaterials,
+      watchStyles,
+    };
   }, [scopedCatalog]);
 
   const filteredProducts = useMemo(
@@ -104,13 +134,25 @@ export function CatalogPage({ mode = 'shop' }: { mode?: 'shop' | 'category' | 's
     [categories, currentCategory?.slug],
   );
 
-  const toggleArrayFilter = (key: 'brands' | 'colors' | 'sizes', value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: prev[key].includes(value)
-        ? prev[key].filter((v) => v !== value)
-        : [...prev[key], value],
-    }));
+  const toggleArrayFilter = (
+    key:
+      | 'brands'
+      | 'colors'
+      | 'sizes'
+      | 'movements'
+      | 'dialColors'
+      | 'strapMaterials'
+      | 'caseMaterials'
+      | 'watchStyles',
+    value: string,
+  ) => {
+    setFilters((prev) => {
+      const arr = prev[key] ?? [];
+      return {
+        ...prev,
+        [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
+      };
+    });
   };
 
   const resetFilters = () => {
@@ -125,6 +167,11 @@ export function CatalogPage({ mode = 'shop' }: { mode?: 'shop' | 'category' | 's
     filters.brands.length +
     filters.colors.length +
     filters.sizes.length +
+    (filters.movements?.length ?? 0) +
+    (filters.dialColors?.length ?? 0) +
+    (filters.strapMaterials?.length ?? 0) +
+    (filters.caseMaterials?.length ?? 0) +
+    (filters.watchStyles?.length ?? 0) +
     (filters.inStockOnly ? 1 : 0) +
     (filters.minRating > 0 ? 1 : 0) +
     (filters.minDiscount > 0 ? 1 : 0) +
@@ -252,7 +299,7 @@ export function CatalogPage({ mode = 'shop' }: { mode?: 'shop' | 'category' | 's
       {facetOptions.sizes.length > 0 && (
         <div className="pt-5 border-t border-[#E9E1D5]">
           <h3 className="text-[11px] uppercase tracking-[0.18em] text-[#85817B] font-medium mb-3">
-            Size / Edition
+            Size / Case Diameter
           </h3>
           <div className="flex flex-wrap gap-2">
             {facetOptions.sizes.map((size) => {
@@ -272,6 +319,116 @@ export function CatalogPage({ mode = 'shop' }: { mode?: 'shop' | 'category' | 's
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Horology Caliber / Movement */}
+      {facetOptions.movements.length > 0 && (
+        <div className="pt-5 border-t border-[#E9E1D5]">
+          <h3 className="text-[11px] uppercase tracking-[0.18em] text-[#85817B] font-medium mb-3">
+            Movement / Caliber
+          </h3>
+          <div className="space-y-2">
+            {facetOptions.movements.map((movement) => (
+              <label key={movement} className="flex items-center gap-2.5 cursor-pointer text-[#171717]">
+                <input
+                  type="checkbox"
+                  checked={(filters.movements ?? []).includes(movement)}
+                  onChange={() => toggleArrayFilter('movements', movement)}
+                  className="accent-[#171717] w-4 h-4"
+                />
+                <span className="capitalize">{movement}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Horology Case Metallurgy */}
+      {facetOptions.caseMaterials.length > 0 && (
+        <div className="pt-5 border-t border-[#E9E1D5]">
+          <h3 className="text-[11px] uppercase tracking-[0.18em] text-[#85817B] font-medium mb-3">
+            Case Metallurgy
+          </h3>
+          <div className="space-y-2">
+            {facetOptions.caseMaterials.map((material) => (
+              <label key={material} className="flex items-center gap-2.5 cursor-pointer text-[#171717]">
+                <input
+                  type="checkbox"
+                  checked={(filters.caseMaterials ?? []).includes(material)}
+                  onChange={() => toggleArrayFilter('caseMaterials', material)}
+                  className="accent-[#171717] w-4 h-4"
+                />
+                <span>{material}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Horology Strap & Bracelet */}
+      {facetOptions.strapMaterials.length > 0 && (
+        <div className="pt-5 border-t border-[#E9E1D5]">
+          <h3 className="text-[11px] uppercase tracking-[0.18em] text-[#85817B] font-medium mb-3">
+            Strap & Bracelet
+          </h3>
+          <div className="space-y-2">
+            {facetOptions.strapMaterials.map((strap) => (
+              <label key={strap} className="flex items-center gap-2.5 cursor-pointer text-[#171717]">
+                <input
+                  type="checkbox"
+                  checked={(filters.strapMaterials ?? []).includes(strap)}
+                  onChange={() => toggleArrayFilter('strapMaterials', strap)}
+                  className="accent-[#171717] w-4 h-4"
+                />
+                <span>{strap}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Horology Dial Finish */}
+      {facetOptions.dialColors.length > 0 && (
+        <div className="pt-5 border-t border-[#E9E1D5]">
+          <h3 className="text-[11px] uppercase tracking-[0.18em] text-[#85817B] font-medium mb-3">
+            Dial Finish
+          </h3>
+          <div className="space-y-2">
+            {facetOptions.dialColors.map((dial) => (
+              <label key={dial} className="flex items-center gap-2.5 cursor-pointer text-[#171717]">
+                <input
+                  type="checkbox"
+                  checked={(filters.dialColors ?? []).includes(dial)}
+                  onChange={() => toggleArrayFilter('dialColors', dial)}
+                  className="accent-[#171717] w-4 h-4"
+                />
+                <span>{dial}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Horology Style */}
+      {facetOptions.watchStyles.length > 0 && (
+        <div className="pt-5 border-t border-[#E9E1D5]">
+          <h3 className="text-[11px] uppercase tracking-[0.18em] text-[#85817B] font-medium mb-3">
+            Horology Style
+          </h3>
+          <div className="space-y-2">
+            {facetOptions.watchStyles.map((style) => (
+              <label key={style} className="flex items-center gap-2.5 cursor-pointer text-[#171717]">
+                <input
+                  type="checkbox"
+                  checked={(filters.watchStyles ?? []).includes(style)}
+                  onChange={() => toggleArrayFilter('watchStyles', style)}
+                  className="accent-[#171717] w-4 h-4"
+                />
+                <span className="capitalize">{style}</span>
+              </label>
+            ))}
           </div>
         </div>
       )}
@@ -339,36 +496,121 @@ export function CatalogPage({ mode = 'shop' }: { mode?: 'shop' | 'category' | 's
     <div>
       {/* Category Hero Banner or Shop/Search Header */}
       {currentCategory ? (
-        <section className="relative bg-[#171717] text-[#F7F4EE] overflow-hidden">
-          <div className="max-w-[1380px] mx-auto grid lg:grid-cols-12 items-stretch">
-            <div className="lg:col-span-7 px-4 sm:px-6 lg:px-10 py-14 lg:py-20 flex flex-col justify-center">
-              <nav aria-label="Breadcrumb" className="text-xs text-[#A8A39C] flex items-center gap-2">
-                <Link to="/" className="hover:text-white">
-                  Home
-                </Link>
-                <span>/</span>
-                <span className="text-[#C5A46D]">{currentCategory.name}</span>
-              </nav>
-              <h1 className="mt-4 font-editorial text-4xl sm:text-5xl text-white">
-                {currentCategory.name}
-              </h1>
-              <p className="mt-3 text-sm sm:text-base text-[#E9E1D5]/85 max-w-xl leading-relaxed">
-                {currentCategory.description}
-              </p>
-              <p className="mt-5 text-xs tracking-[0.14em] uppercase text-[#C5A46D]">
-                {currentCategory.featuredCollectionTitle} · {currentCategory.featuredCollectionNote}
-              </p>
+        currentCategory.slug === 'watches' ? (
+          <section className="relative bg-[#0B0B0B] text-[#F7F4EE] border-b border-[#22201E] overflow-hidden">
+            {/* Ambient gold glow */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-20"
+              style={{
+                backgroundImage:
+                  'radial-gradient(ellipse at 75% 35%, rgba(197, 164, 109, 0.25) 0%, transparent 65%)',
+              }}
+              aria-hidden="true"
+            />
+            <div className="max-w-[1380px] mx-auto grid lg:grid-cols-12 items-stretch relative z-10">
+              <div className="lg:col-span-7 px-4 sm:px-6 lg:px-10 py-12 lg:py-16 flex flex-col justify-center">
+                <nav aria-label="Breadcrumb" className="text-xs text-[#A8A39C] flex items-center gap-2">
+                  <Link to="/" className="hover:text-white">
+                    Home
+                  </Link>
+                  <span>/</span>
+                  <span className="text-[#C5A46D]">{currentCategory.name}</span>
+                </nav>
+
+                <div className="mt-4 inline-flex items-center gap-2 self-start px-3 py-1 bg-[#171717] border border-[#33302C] text-[10px] uppercase tracking-[0.22em] text-[#C5A46D]">
+                  <Watch className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  <span>Haute Horlogerie · Independent Ateliers</span>
+                </div>
+
+                <h1 className="mt-3.5 font-editorial text-4xl sm:text-5xl lg:text-6xl text-white tracking-tight">
+                  {currentCategory.name}
+                </h1>
+
+                <p className="mt-3.5 text-sm sm:text-base text-[#D9D0C2] max-w-xl leading-relaxed">
+                  Precision mechanical calibers, meca-quartz chronographs, and architectural minimalist instruments curated from legitimate independent ateliers. Every piece features scratch-resistant sapphire crystal glass, surgical-grade metallurgy, and individual serial numbering.
+                </p>
+
+                {/* Horological Pillars Grid */}
+                <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-5 border-t border-[#22201E]">
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-[#C5A46D] font-medium">
+                      Calibers
+                    </p>
+                    <p className="text-xs text-[#A8A39C]">Automatic & Meca-Quartz</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-[#C5A46D] font-medium">
+                      Crystals
+                    </p>
+                    <p className="text-xs text-[#A8A39C]">Anti-Reflective Sapphire</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-[#C5A46D] font-medium">
+                      Metallurgy
+                    </p>
+                    <p className="text-xs text-[#A8A39C]">316L Steel & Titanium</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-[#C5A46D] font-medium">
+                      Warranty
+                    </p>
+                    <p className="text-xs text-[#A8A39C]">2–3 Year Pan-India</p>
+                  </div>
+                </div>
+
+                <p className="mt-5 text-[11px] tracking-[0.08em] text-[#85817B] flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#C5A46D]" strokeWidth={1.5} />
+                  <span>Curator Policy: 100% Authentic Independent Horology · Zero Counterfeits</span>
+                </p>
+              </div>
+
+              <div className="lg:col-span-5 relative min-h-[280px] lg:min-h-[420px] bg-[#171717] flex items-center justify-center p-4 lg:p-8">
+                <div className="relative w-full h-full max-h-[420px] border border-[#33302C] overflow-hidden">
+                  <SafeImage
+                    src={currentCategory.heroImage}
+                    alt={currentCategory.name}
+                    priority
+                    className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute bottom-3 right-3 px-3 py-1 bg-[#0B0B0B]/85 backdrop-blur-sm border border-[#33302C] text-[10px] uppercase tracking-[0.2em] text-[#C5A46D]">
+                    Atelier Edition
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="lg:col-span-5 relative min-h-[240px] lg:min-h-[340px] bg-[#24221F]">
-              <SafeImage
-                src={currentCategory.heroImage}
-                alt={currentCategory.name}
-                priority
-                className="w-full h-full object-cover"
-              />
+          </section>
+        ) : (
+          <section className="relative bg-[#171717] text-[#F7F4EE] overflow-hidden">
+            <div className="max-w-[1380px] mx-auto grid lg:grid-cols-12 items-stretch">
+              <div className="lg:col-span-7 px-4 sm:px-6 lg:px-10 py-14 lg:py-20 flex flex-col justify-center">
+                <nav aria-label="Breadcrumb" className="text-xs text-[#A8A39C] flex items-center gap-2">
+                  <Link to="/" className="hover:text-white">
+                    Home
+                  </Link>
+                  <span>/</span>
+                  <span className="text-[#C5A46D]">{currentCategory.name}</span>
+                </nav>
+                <h1 className="mt-4 font-editorial text-4xl sm:text-5xl text-white">
+                  {currentCategory.name}
+                </h1>
+                <p className="mt-3 text-sm sm:text-base text-[#E9E1D5]/85 max-w-xl leading-relaxed">
+                  {currentCategory.description}
+                </p>
+                <p className="mt-5 text-xs tracking-[0.14em] uppercase text-[#C5A46D]">
+                  {currentCategory.featuredCollectionTitle} · {currentCategory.featuredCollectionNote}
+                </p>
+              </div>
+              <div className="lg:col-span-5 relative min-h-[240px] lg:min-h-[340px] bg-[#24221F]">
+                <SafeImage
+                  src={currentCategory.heroImage}
+                  alt={currentCategory.name}
+                  priority
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )
       ) : (
         <section className="bg-white border-b border-[#E9E1D5]">
           <div className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-10 py-10 lg:py-14">
