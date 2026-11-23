@@ -31,6 +31,7 @@ export default function App() {
               <Route path="/product/:slug" element={<ProductDetailPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/checkout/*" element={<CheckoutPage />} />
               <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
