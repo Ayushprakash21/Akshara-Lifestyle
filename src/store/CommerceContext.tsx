@@ -34,7 +34,33 @@ import {
 } from '../services/seedData';
 import { readStorage, writeStorage } from '../services/storage';
 import { calculateCartTotals, type CartTotals } from '../utils/commerceLogic';
-import { paymentGatewayAdapter, shippingProviderAdapter } from '../services/integrations';
+import { shippingProviderAdapter } from '../services/integrations';
+import {
+  isFirebaseConfigured,
+  getFirebaseStatus,
+  type FirebaseConfigStatus,
+} from '../services/firebase/firebase';
+import {
+  loginWithEmail,
+  registerWithEmail,
+  signInWithGoogle,
+  signOutUser,
+  requestPasswordReset as firebasePasswordReset,
+  subscribeToAuthState,
+} from '../services/firebase/auth';
+import { saveOrder as persistOrder } from '../services/orderService';
+import {
+  getCustomerProfile,
+  saveCustomerAddress,
+  deleteCustomerAddress as persistDeleteAddress,
+  updateCustomerProfile as persistCustomerProfile,
+  getCustomerWishlist,
+  saveCustomerWishlist,
+  getCustomerCart,
+  saveCustomerCart,
+} from '../services/customerService';
+import { decrementOrderInventory } from '../services/inventoryService';
+import { paymentService } from '../services/paymentService';
 
 interface PlaceOrderPayload {
   customerName: string;
@@ -71,6 +97,10 @@ interface CommerceContextValue {
   toasts: ToastMessage[];
   newsletterSubscribers: string[];
 
+  // Firebase integration status
+  isFirebaseLive: boolean;
+  firebaseStatus: FirebaseConfigStatus;
+
   // UI controls
   openCartDrawer: () => void;
   closeCartDrawer: () => void;
@@ -93,11 +123,13 @@ interface CommerceContextValue {
   subscribeNewsletter: (email: string) => boolean;
 
   // Auth & customer account actions
-  login: (email: string, password: string) => { ok: boolean; error?: string; user?: User };
-  register: (payload: { name: string; email: string; phone: string; password: string }) => {
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string; user?: User }>;
+  register: (payload: { name: string; email: string; phone: string; password: string }) => Promise<{
     ok: boolean;
     error?: string;
-  };
+  }>;
+  loginWithGoogle: () => Promise<{ ok: boolean; error?: string; user?: User }>;
+  requestPasswordReset: (email: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (updates: Partial<Pick<User, 'name' | 'phone' | 'gstin' | 'emailOptIn' | 'smsOptIn'>>) => void;
   saveAddress: (address: Omit<Address, 'id'>, existingId?: string) => void;
@@ -215,6 +247,38 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     () => users.find((u) => u.id === currentUserId) ?? null,
     [users, currentUserId],
   );
+
+  const isFirebaseLive = useMemo(() => isFirebaseConfigured(), []);
+  const firebaseStatus = useMemo(() => getFirebaseStatus(), []);
+
+  // Listen to live Firebase Auth state and synchronize profile/cart/wishlist
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+
+    const unsubscribe = subscribeToAuthState(async (fbUser) => {
+      if (fbUser) {
+        const profile = await getCustomerProfile(fbUser.uid);
+        if (profile) {
+          setUsers((prev) => {
+            const exists = prev.some((u) => u.id === profile.id);
+            return exists ? prev.map((u) => (u.id === profile.id ? profile : u)) : [profile, ...prev];
+          });
+          setCurrentUserId(profile.id);
+
+          const remoteCart = await getCustomerCart(fbUser.uid);
+          if (remoteCart && remoteCart.length > 0) {
+            setCart(remoteCart);
+          }
+          const remoteWishlist = await getCustomerWishlist(fbUser.uid);
+          if (remoteWishlist && remoteWishlist.length > 0) {
+            setWishlist(remoteWishlist);
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const cartTotals = useMemo(
     () =>
@@ -379,11 +443,29 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   );
 
   const login = useCallback(
-    (email: string, password: string) => {
+    async (email: string, password: string) => {
       const cleanEmail = email.trim().toLowerCase();
       if (!cleanEmail || !password.trim()) {
         return { ok: false, error: 'Please enter both email and password.' };
       }
+
+      // 1. Live Firebase Authentication
+      if (isFirebaseConfigured()) {
+        const fbRes = await loginWithEmail(cleanEmail, password);
+        if (fbRes.ok && fbRes.user) {
+          const profile = fbRes.user;
+          setUsers((prev) => {
+            const exists = prev.some((u) => u.id === profile.id);
+            return exists ? prev.map((u) => (u.id === profile.id ? profile : u)) : [profile, ...prev];
+          });
+          setCurrentUserId(profile.id);
+          pushToast(`Welcome back, ${profile.name.split(' ')[0]}`, undefined, 'success');
+          return { ok: true, user: profile };
+        }
+        return { ok: false, error: fbRes.error || 'Authentication failed.' };
+      }
+
+      // 2. Demo Persistence Mode Fallback
       const found = users.find((u) => u.email.toLowerCase() === cleanEmail);
       if (!found) {
         return {
@@ -402,8 +484,23 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   );
 
   const register = useCallback(
-    (payload: { name: string; email: string; phone: string; password: string }) => {
+    async (payload: { name: string; email: string; phone: string; password: string }) => {
       const cleanEmail = payload.email.trim().toLowerCase();
+
+      // 1. Live Firebase Authentication
+      if (isFirebaseConfigured()) {
+        const fbRes = await registerWithEmail(payload);
+        if (fbRes.ok && fbRes.user) {
+          const profile = fbRes.user;
+          setUsers((prev) => [profile, ...prev.filter((u) => u.id !== profile.id)]);
+          setCurrentUserId(profile.id);
+          pushToast('Account created', `Welcome to AKSHARA LIFESTYLE, ${profile.name}.`, 'success');
+          return { ok: true };
+        }
+        return { ok: false, error: fbRes.error || 'Registration failed.' };
+      }
+
+      // 2. Demo Persistence Mode Fallback
       if (users.some((u) => u.email.toLowerCase() === cleanEmail)) {
         return { ok: false, error: 'An account with this email already exists.' };
       }
@@ -426,14 +523,45 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     [users, pushToast],
   );
 
-  const logout = useCallback(() => {
+  const loginWithGoogle = useCallback(async () => {
+    if (!isFirebaseConfigured()) {
+      return {
+        ok: false,
+        error: 'Firebase is running in local demo mode. Configure Firebase in .env to enable Google Sign-In.',
+      };
+    }
+    const res = await signInWithGoogle();
+    if (res.ok && res.user) {
+      const profile = res.user;
+      setUsers((prev) => [profile, ...prev.filter((u) => u.id !== profile.id)]);
+      setCurrentUserId(profile.id);
+      pushToast(`Welcome, ${profile.name.split(' ')[0]}`, undefined, 'success');
+      return { ok: true, user: profile };
+    }
+    return { ok: false, error: res.error || 'Google sign-in was not completed.' };
+  }, [pushToast]);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    if (isFirebaseConfigured()) {
+      return await firebasePasswordReset(email);
+    }
+    return { ok: true };
+  }, []);
+
+  const logout = useCallback(async () => {
+    if (isFirebaseConfigured()) {
+      await signOutUser();
+    }
     setCurrentUserId(null);
     pushToast('Signed out', 'You have been signed out of your account.');
   }, [pushToast]);
 
   const updateProfile = useCallback(
-    (updates: Partial<Pick<User, 'name' | 'phone' | 'gstin' | 'emailOptIn' | 'smsOptIn'>>) => {
+    async (updates: Partial<Pick<User, 'name' | 'phone' | 'gstin' | 'emailOptIn' | 'smsOptIn'>>) => {
       if (!currentUserId) return;
+      if (isFirebaseConfigured()) {
+        await persistCustomerProfile(currentUserId, updates);
+      }
       setUsers((prev) =>
         prev.map((u) => (u.id === currentUserId ? { ...u, ...updates } : u)),
       );
@@ -443,44 +571,36 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   );
 
   const saveAddress = useCallback(
-    (address: Omit<Address, 'id'>, existingId?: string) => {
+    async (address: Omit<Address, 'id'>, existingId?: string) => {
       if (!currentUserId) return;
+      const targetId = existingId ?? `addr-${Date.now()}`;
+      const newAddress: Address = { ...address, id: targetId };
+
+      const currentUserObj = users.find((u) => u.id === currentUserId);
+      const currentAddresses = currentUserObj?.addresses ?? [];
+      const updatedAddresses = await saveCustomerAddress(currentUserId, newAddress, currentAddresses);
+
       setUsers((prev) =>
-        prev.map((u) => {
-          if (u.id !== currentUserId) return u;
-          let updated: Address[];
-          if (existingId) {
-            updated = u.addresses.map((a) =>
-              a.id === existingId ? { ...address, id: existingId } : a,
-            );
-          } else {
-            updated = [...u.addresses, { ...address, id: `addr-${Date.now()}` }];
-          }
-          if (address.isDefault) {
-            const targetId = existingId ?? updated[updated.length - 1].id;
-            updated = updated.map((a) => ({ ...a, isDefault: a.id === targetId }));
-          }
-          return { ...u, addresses: updated };
-        }),
+        prev.map((u) => (u.id === currentUserId ? { ...u, addresses: updatedAddresses } : u)),
       );
       pushToast('Address saved', undefined, 'success');
     },
-    [currentUserId, pushToast],
+    [currentUserId, users, pushToast],
   );
 
   const deleteAddress = useCallback(
-    (addressId: string) => {
+    async (addressId: string) => {
       if (!currentUserId) return;
+      const currentUserObj = users.find((u) => u.id === currentUserId);
+      const currentAddresses = currentUserObj?.addresses ?? [];
+      const updatedAddresses = await persistDeleteAddress(currentUserId, addressId, currentAddresses);
+
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === currentUserId
-            ? { ...u, addresses: u.addresses.filter((a) => a.id !== addressId) }
-            : u,
-        ),
+        prev.map((u) => (u.id === currentUserId ? { ...u, addresses: updatedAddresses } : u)),
       );
       pushToast('Address removed');
     },
-    [currentUserId, pushToast],
+    [currentUserId, users, pushToast],
   );
 
   const placeDemoOrder = useCallback(
@@ -491,7 +611,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         paymentMethod: payload.paymentMethod,
       });
 
-      const paymentIntent = await paymentGatewayAdapter.createCheckoutOrder({
+      // Modular payment intent using PaymentService abstraction
+      const paymentIntent = await paymentService.createPaymentIntent({
         amountInr: totals.total,
         method: payload.paymentMethod,
         customerEmail: payload.customerEmail,
@@ -566,7 +687,7 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
           id: `pay-${Date.now()}`,
           method: payload.paymentMethod,
           provider: paymentIntent.provider,
-          mode: 'DEMO',
+          mode: paymentIntent.mode,
           status: paymentIntent.status,
           amount: totals.total,
           referenceId: paymentIntent.referenceId,
@@ -589,21 +710,17 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
         isDemoOrder: true,
       };
 
-      // Decrement inventory cleanly
-      setProducts((prev) =>
-        prev.map((prod) => {
-          const matchingItems = cart.filter((ci) => ci.productId === prod.id);
-          if (matchingItems.length === 0) return prod;
-          return {
-            ...prod,
-            variants: prod.variants.map((v) => {
-              const matched = matchingItems.find((ci) => ci.variantId === v.id);
-              if (!matched) return v;
-              return { ...v, stock: Math.max(0, v.stock - matched.quantity) };
-            }),
-          };
-        }),
-      );
+      // Decrement inventory cleanly using inventory service
+      const updatedProducts = await decrementOrderInventory(cart, products);
+      setProducts(updatedProducts);
+
+      // Save order to Firestore if configured
+      if (isFirebaseConfigured()) {
+        await persistOrder(newOrder);
+        if (currentUserId) {
+          await saveCustomerCart(currentUserId, []);
+        }
+      }
 
       // Increment coupon usage count if applied
       if (newOrder.couponCode) {
@@ -860,6 +977,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     isSearchOpen,
     toasts,
     newsletterSubscribers,
+    isFirebaseLive,
+    firebaseStatus,
     openCartDrawer: () => setIsCartDrawerOpen(true),
     closeCartDrawer: () => setIsCartDrawerOpen(false),
     openSearch: () => setIsSearchOpen(true),
@@ -879,6 +998,8 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
     subscribeNewsletter,
     login,
     register,
+    loginWithGoogle,
+    requestPasswordReset,
     logout,
     updateProfile,
     saveAddress,

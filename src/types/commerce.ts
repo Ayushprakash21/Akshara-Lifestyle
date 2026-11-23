@@ -1,4 +1,11 @@
-export type UserRole = 'customer' | 'admin' | 'merchandiser' | 'operations';
+export type UserRole =
+  | 'super_admin'
+  | 'admin'
+  | 'product_manager'
+  | 'order_manager'
+  | 'customer'
+  | 'merchandiser'
+  | 'operations';
 
 export type CategorySlug =
   | 'fashion-clothing'
@@ -185,9 +192,9 @@ export interface Shipment {
 export interface PaymentRecord {
   id: string;
   method: PaymentMethodId;
-  provider: 'razorpay_demo' | 'cod_demo';
+  provider: 'razorpay_demo' | 'cod_demo' | 'razorpay_live';
   mode: 'DEMO' | 'LIVE';
-  status: 'demo_authorized' | 'cod_pending' | 'refunded';
+  status: 'demo_authorized' | 'cod_pending' | 'pending' | 'unpaid' | 'refunded';
   amount: number;
   referenceId: string;
   paidAt: string;

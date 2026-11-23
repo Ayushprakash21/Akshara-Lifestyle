@@ -31,6 +31,9 @@ export function Footer() {
             <p className="text-sm text-[#A8A39C] leading-relaxed max-w-sm">
               Contemporary Indian accessible luxury across fashion, jewellery, botanical beauty, architectural home objects, personal audio, and structured leather carry.
             </p>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-[#C5A46D] font-medium">
+              EVERYDAY, ELEVATED.
+            </p>
             <p className="text-xs text-[#85817B]">
               Mumbai Flagship Office · Pan-India Insured Delivery · GST Compliant Invoicing
             </p>

@@ -3,30 +3,47 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCommerce } from '../store/CommerceContext';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { isValidEmail, isValidIndianPhone } from '../utils/commerceLogic';
+import { BrandLogo } from '../components/BrandLogo';
+
+const ADMIN_ROLES = [
+  'super_admin',
+  'admin',
+  'product_manager',
+  'order_manager',
+  'merchandiser',
+  'operations',
+];
 
 export function LoginPage() {
-  const { login, pushToast } = useCommerce();
+  const { login, loginWithGoogle, pushToast, isFirebaseLive } = useCommerce();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useDocumentMeta({ title: 'Sign In' });
+  useDocumentMeta({ title: 'Sign In | AKSHARA LIFESTYLE' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = login(email, password);
+    setError('');
+    setIsSubmitting(true);
+    const res = await login(email, password);
+    setIsSubmitting(false);
+
     if (!res.ok) {
       setError(res.error ?? 'Unable to sign in.');
       return;
     }
-    navigate(res.user?.role === 'admin' ? '/admin' : '/account');
+    const isAdmin = ADMIN_ROLES.includes(res.user?.role || '');
+    navigate(isAdmin ? '/admin' : '/account');
   };
 
   return (
     <div className="max-w-md mx-auto px-4 sm:px-6 py-16 lg:py-24">
       <div className="bg-white border border-[#E9E1D5] p-8 space-y-6">
         <div className="text-center">
+          <BrandLogo variant="dark" layout="stacked" className="mx-auto mb-3" />
           <p className="text-[11px] uppercase tracking-[0.2em] text-[#C5A46D] font-medium">
             AKSHARA Account
           </p>
@@ -50,6 +67,7 @@ export function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              required
               className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3.5 py-3 text-sm text-[#171717]"
             />
           </div>
@@ -68,29 +86,44 @@ export function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 6 characters"
+              required
               className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3.5 py-3 text-sm text-[#171717]"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3.5 bg-[#171717] hover:bg-[#0B0B0B] text-white text-xs tracking-[0.16em] uppercase font-semibold transition-colors"
+            disabled={isSubmitting}
+            className="w-full py-3.5 bg-[#171717] hover:bg-[#0B0B0B] text-white text-xs tracking-[0.16em] uppercase font-semibold transition-colors disabled:opacity-60"
           >
-            Sign In
+            {isSubmitting ? 'Verifying...' : 'Sign In'}
           </button>
         </form>
 
         {/* Google Sign-In Readiness */}
         <button
           type="button"
-          onClick={() =>
-            pushToast(
-              'Google Sign-In Readiness',
-              'Configure Firebase Auth / Google OAuth client ID in .env to enable live Google Sign-In.',
-            )
-          }
-          className="w-full py-3 border border-[#D9D0C2] hover:border-[#171717] text-xs tracking-[0.12em] uppercase text-[#171717] transition-colors"
+          onClick={async () => {
+            if (isFirebaseLive) {
+              const res = await loginWithGoogle();
+              if (res.ok) {
+                const isAdmin = ADMIN_ROLES.includes(res.user?.role || '');
+                navigate(isAdmin ? '/admin' : '/account');
+              } else if (res.error) {
+                setError(res.error);
+              }
+            } else {
+              pushToast(
+                'Google Sign-In Readiness',
+                'Firebase Auth Google provider is prepared. Connect live credentials in .env to enable instant Google login.',
+              );
+            }
+          }}
+          className="w-full py-3 border border-[#D9D0C2] hover:border-[#171717] text-xs tracking-[0.12em] uppercase text-[#171717] transition-colors flex items-center justify-center gap-2"
         >
-          Continue with Google (Requires OAuth Config)
+          <span>Continue with Google</span>
+          {!isFirebaseLive && (
+            <span className="text-[10px] text-[#C5A46D] font-mono">(Ready)</span>
+          )}
         </button>
 
         {/* Demo Mode Quick Access */}
@@ -101,8 +134,8 @@ export function LoginPage() {
           <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
-              onClick={() => {
-                const res = login('meera@akshara.demo', 'akshara123');
+              onClick={async () => {
+                const res = await login('meera@akshara.demo', 'akshara123');
                 if (res.ok) navigate('/account');
               }}
               className="py-2.5 px-3 bg-[#F7F4EE] border border-[#D9D0C2] hover:border-[#171717] text-xs text-[#171717] font-medium"
@@ -111,8 +144,8 @@ export function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                const res = login('admin@akshara.demo', 'admin123');
+              onClick={async () => {
+                const res = await login('admin@akshara.demo', 'admin123');
                 if (res.ok) navigate('/admin');
               }}
               className="py-2.5 px-3 bg-[#F7F4EE] border border-[#D9D0C2] hover:border-[#171717] text-xs text-[#171717] font-medium"
@@ -141,12 +174,13 @@ export function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useDocumentMeta({ title: 'Create Account' });
+  useDocumentMeta({ title: 'Create Account | AKSHARA LIFESTYLE' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim().length < 2) {
+    if (!name.trim()) {
       setError('Please enter your full name.');
       return;
     }
@@ -162,7 +196,12 @@ export function RegisterPage() {
       setError('Password must be at least 6 characters.');
       return;
     }
-    const res = register({ name, email, phone, password });
+
+    setIsSubmitting(true);
+    setError('');
+    const res = await register({ name, email, phone, password });
+    setIsSubmitting(false);
+
     if (!res.ok) {
       setError(res.error ?? 'Unable to create account.');
       return;
@@ -174,6 +213,7 @@ export function RegisterPage() {
     <div className="max-w-md mx-auto px-4 sm:px-6 py-16 lg:py-24">
       <div className="bg-white border border-[#E9E1D5] p-8 space-y-6">
         <div className="text-center">
+          <BrandLogo variant="dark" layout="stacked" className="mx-auto mb-3" />
           <p className="text-[11px] uppercase tracking-[0.2em] text-[#C5A46D] font-medium">
             Join AKSHARA
           </p>
@@ -196,6 +236,7 @@ export function RegisterPage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
               className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3.5 py-3 text-sm"
             />
           </div>
@@ -208,6 +249,7 @@ export function RegisterPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3.5 py-3 text-sm"
             />
           </div>
@@ -221,6 +263,7 @@ export function RegisterPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="10-digit mobile number"
+              required
               className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3.5 py-3 text-sm tabular-nums"
             />
           </div>
@@ -234,14 +277,16 @@ export function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 6 characters"
+              required
               className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3.5 py-3 text-sm"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3.5 bg-[#171717] hover:bg-[#0B0B0B] text-white text-xs tracking-[0.16em] uppercase font-semibold"
+            disabled={isSubmitting}
+            className="w-full py-3.5 bg-[#171717] hover:bg-[#0B0B0B] text-white text-xs tracking-[0.16em] uppercase font-semibold disabled:opacity-60"
           >
-            Create Account
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 
@@ -257,30 +302,55 @@ export function RegisterPage() {
 }
 
 export function ForgotPasswordPage() {
+  const { requestPasswordReset, isFirebaseLive } = useCommerce();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useDocumentMeta({ title: 'Reset Password' });
+  useDocumentMeta({ title: 'Reset Password | AKSHARA LIFESTYLE' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValidEmail(email)) {
       setError('Enter a valid email address.');
       return;
     }
+
+    setIsSubmitting(true);
     setError('');
+
+    if (isFirebaseLive) {
+      const res = await requestPasswordReset(email);
+      setIsSubmitting(false);
+      if (!res.ok) {
+        setError(res.error || 'Failed to dispatch password recovery email.');
+        return;
+      }
+    } else {
+      setIsSubmitting(false);
+    }
+
     setSent(true);
   };
 
   return (
     <div className="max-w-md mx-auto px-4 sm:px-6 py-20">
       <div className="bg-white border border-[#E9E1D5] p-8 space-y-5">
-        <h1 className="font-editorial text-3xl text-[#171717]">Reset Password</h1>
+        <div className="text-center pb-2">
+          <BrandLogo variant="dark" layout="stacked" className="mx-auto mb-3" />
+          <p className="text-[11px] uppercase tracking-[0.2em] text-[#C5A46D] font-medium">
+            Account Recovery
+          </p>
+          <h1 className="mt-2 font-editorial text-3xl text-[#171717]">Reset Password</h1>
+        </div>
+
         {sent ? (
           <div className="space-y-4 text-sm text-[#55524E]">
             <p>
-              In production with Firebase/Supabase Auth connected, a password recovery link is dispatched to{' '}
+              {isFirebaseLive
+                ? 'A password recovery link has been dispatched to '
+                : 'In production with Firebase Auth connected, a password recovery link is dispatched to '}
               <strong className="text-[#171717]">{email}</strong>.
             </p>
             <Link
@@ -302,13 +372,15 @@ export function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               aria-label="Email address"
+              required
               className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3.5 py-3 text-sm"
             />
             <button
               type="submit"
-              className="w-full py-3 bg-[#171717] text-white text-xs tracking-[0.16em] uppercase"
+              disabled={isSubmitting}
+              className="w-full py-3 bg-[#171717] text-white text-xs tracking-[0.16em] uppercase disabled:opacity-60"
             >
-              Request Reset Link
+              {isSubmitting ? 'Sending Request...' : 'Request Reset Link'}
             </button>
           </form>
         )}

@@ -46,23 +46,4 @@ export function WishlistPage() {
   );
 }
 
-export function NotFoundPage() {
-  useDocumentMeta({ title: 'Page Not Found' });
-  return (
-    <div className="max-w-xl mx-auto px-6 py-24 text-center">
-      <p className="font-mono text-xs tracking-[0.22em] text-[#C5A46D]">404</p>
-      <h1 className="mt-3 font-editorial text-4xl sm:text-5xl text-[#171717]">
-        This page is unavailable
-      </h1>
-      <p className="mt-3 text-sm text-[#85817B]">
-        The link may have moved or been archived. Return to the storefront to continue exploring AKSHARA LIFESTYLE.
-      </p>
-      <Link
-        to="/"
-        className="mt-7 inline-block px-7 py-3.5 bg-[#171717] text-white text-xs tracking-[0.16em] uppercase"
-      >
-        Return Home
-      </Link>
-    </div>
-  );
-}
+export { NotFoundPage } from './NotFoundPage';
