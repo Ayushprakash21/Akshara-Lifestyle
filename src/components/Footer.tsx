@@ -131,12 +131,6 @@ export function Footer() {
           <p>© {new Date().getFullYear()} AKSHARA LIFESTYLE. All rights reserved. Prices inclusive of applicable Indian GST.</p>
           <div className="flex flex-wrap items-center gap-5">
             <span>UPI · Cards · Net Banking · COD</span>
-            <Link
-              to="/admin"
-              className="text-[#85817B] hover:text-[#C5A46D] transition-colors underline underline-offset-4"
-            >
-              Admin Console
-            </Link>
           </div>
         </div>
       </div>

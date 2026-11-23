@@ -5,15 +5,6 @@ import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { isValidEmail, isValidIndianPhone } from '../utils/commerceLogic';
 import { BrandLogo } from '../components/BrandLogo';
 
-const ADMIN_ROLES = [
-  'super_admin',
-  'admin',
-  'product_manager',
-  'order_manager',
-  'merchandiser',
-  'operations',
-];
-
 export function LoginPage() {
   const { login, loginWithGoogle, pushToast, isFirebaseLive } = useCommerce();
   const navigate = useNavigate();
@@ -35,8 +26,7 @@ export function LoginPage() {
       setError(res.error ?? 'Unable to sign in.');
       return;
     }
-    const isAdmin = ADMIN_ROLES.includes(res.user?.role || '');
-    navigate(isAdmin ? '/admin' : '/account');
+    navigate('/account');
   };
 
   return (
@@ -106,8 +96,7 @@ export function LoginPage() {
             if (isFirebaseLive) {
               const res = await loginWithGoogle();
               if (res.ok) {
-                const isAdmin = ADMIN_ROLES.includes(res.user?.role || '');
-                navigate(isAdmin ? '/admin' : '/account');
+                navigate('/account');
               } else if (res.error) {
                 setError(res.error);
               }
@@ -131,28 +120,16 @@ export function LoginPage() {
           <p className="text-[11px] uppercase tracking-[0.16em] text-[#85817B]">
             Demo Environment Quick Sign-In
           </p>
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={async () => {
-                const res = await login('meera@akshara.demo', 'akshara123');
-                if (res.ok) navigate('/account');
-              }}
-              className="py-2.5 px-3 bg-[#F7F4EE] border border-[#D9D0C2] hover:border-[#171717] text-xs text-[#171717] font-medium"
-            >
-              Demo Customer
-            </button>
-            <button
-              type="button"
-              onClick={async () => {
-                const res = await login('admin@akshara.demo', 'admin123');
-                if (res.ok) navigate('/admin');
-              }}
-              className="py-2.5 px-3 bg-[#F7F4EE] border border-[#D9D0C2] hover:border-[#171717] text-xs text-[#171717] font-medium"
-            >
-              Demo Admin
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              const res = await login('meera@akshara.demo', 'akshara123');
+              if (res.ok) navigate('/account');
+            }}
+            className="w-full py-2.5 px-3 bg-[#F7F4EE] border border-[#D9D0C2] hover:border-[#171717] text-xs text-[#171717] font-medium transition-colors"
+          >
+            Demo Customer Account
+          </button>
         </div>
 
         <p className="text-center text-xs text-[#85817B]">

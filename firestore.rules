@@ -53,6 +53,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // 1b. Protected Admins collection
+    // Stores verified administrative credentials and status; writable only by super_admin
+    match /admins/{adminId} {
+      allow read: if isAuthenticated() && (request.auth.uid == adminId || isSuperAdmin());
+      allow write: if isSuperAdmin();
+    }
+
     // 2. Products collection
     // Public read for storefront, restricted write to product managers and admins
     match /products/{productId} {

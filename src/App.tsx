@@ -20,6 +20,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             {/* Dedicated role-protected Admin Console */}
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/*" element={<AdminPage />} />
 
             {/* Customer Storefront Routes */}

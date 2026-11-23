@@ -133,6 +133,7 @@ export interface User {
   emailOptIn: boolean;
   smsOptIn: boolean;
   isDemoAccount?: boolean;
+  mustChangePassword?: boolean;
 }
 
 export interface CartItem {

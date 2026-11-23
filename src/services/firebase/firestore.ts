@@ -27,6 +27,8 @@ export const COLLECTIONS = {
   ADDRESSES: 'addresses',
   COUPONS: 'coupons',
   REVIEWS: 'reviews',
+  ADMINS: 'admins',
+  SETTINGS: 'settings',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

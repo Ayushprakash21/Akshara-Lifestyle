@@ -7,7 +7,6 @@ import {
   Package,
   RotateCcw,
   Settings,
-  Shield,
   Trash2,
   User as UserIcon,
 } from 'lucide-react';
@@ -161,15 +160,6 @@ export function AccountPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {currentUser.role !== 'customer' && (
-            <Link
-              to="/admin"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#171717] text-[#C5A46D] text-xs tracking-[0.14em] uppercase"
-            >
-              <Shield className="w-3.5 h-3.5" strokeWidth={1.5} />
-              Admin Console
-            </Link>
-          )}
           <button
             type="button"
             onClick={() => {
