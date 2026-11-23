@@ -1498,7 +1498,7 @@ export const SEED_ORDERS: Order[] = [
       state: 'Delhi',
       pincode: '110003',
     },
-    deliveryMethod: 'express',
+    deliveryMethod: 'standard',
     items: [
       {
         productId: 'prod-anc-headphones',
@@ -1518,11 +1518,11 @@ export const SEED_ORDERS: Order[] = [
     subtotal: 18990,
     mrpTotal: 22990,
     couponDiscount: 0,
-    shippingFee: 349,
+    shippingFee: 0,
     codFee: 0,
     taxableValue: 16093,
     gstAmount: 2897,
-    total: 19339,
+    total: 18990,
     status: 'shipped',
     payment: {
       id: 'pay-demo-1002',
@@ -1530,7 +1530,7 @@ export const SEED_ORDERS: Order[] = [
       provider: 'razorpay_demo',
       mode: 'DEMO',
       status: 'demo_authorized',
-      amount: 19339,
+      amount: 18990,
       referenceId: 'DEMO-RZP-CARD-741022',
       paidAt: '2026-11-19T15:10:00Z',
     },
@@ -1563,7 +1563,7 @@ export const SEED_RETURNS: ReturnRequest[] = [];
 export const SEED_BANNERS: PromoBanner[] = [
   {
     id: 'bnr-1',
-    title: 'Complimentary Pan-India shipping on orders above ₹4,999',
+    title: 'All-inclusive Pan-India delivery on every order',
     subtitle: 'Use code AKSHARA10 for 10% privilege savings above ₹5,000',
     ctaLabel: 'Explore Collection',
     ctaLink: '/shop',
@@ -1583,7 +1583,7 @@ export const SEED_BANNERS: PromoBanner[] = [
 
 export const SEED_HOMEPAGE_CONFIG: HomepageConfig = {
   announcementText:
-    'Complimentary Pan-India delivery above ₹4,999 · 14-day effortless returns · Code AKSHARA10',
+    'All-inclusive Pan-India delivery on every order · 14-day effortless returns · Code AKSHARA10',
   heroEyebrow: 'Autumn — Winter Collection',
   heroHeadline: 'EVERYDAY, ELEVATED.',
   heroSubheadline:
@@ -1599,10 +1599,10 @@ export const SEED_HOMEPAGE_CONFIG: HomepageConfig = {
 };
 
 export const SEED_SHIPPING_CONFIG: ShippingConfig = {
-  freeShippingThreshold: 4999,
-  standardFee: 199,
-  expressFee: 349,
-  priorityFee: 599,
+  freeShippingThreshold: 0,
+  standardFee: 0,
+  expressFee: 0,
+  priorityFee: 0,
   codFee: 99,
   codMaxOrderValue: 25000,
   dispatchHours: 24,

@@ -12,21 +12,11 @@ export function CartDrawer() {
     cart,
     products,
     cartTotals,
-    shippingConfig,
     updateCartQuantity,
     removeFromCart,
   } = useCommerce();
 
   if (!isCartDrawerOpen) return null;
-
-  const freeShippingProgress = Math.min(
-    100,
-    Math.round(
-      ((shippingConfig.freeShippingThreshold - cartTotals.freeShippingRemaining) /
-        shippingConfig.freeShippingThreshold) *
-        100,
-    ),
-  );
 
   return (
     <div
@@ -59,28 +49,11 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {/* Free shipping indicator */}
+        {/* All-inclusive delivery indicator */}
         {cart.length > 0 && (
-          <div className="px-6 py-3 bg-[#E9E1D5]/55 border-b border-[#E9E1D5]">
-            <p className="text-xs text-[#171717]">
-              {cartTotals.freeShippingRemaining > 0 ? (
-                <>
-                  Add{' '}
-                  <span className="font-semibold tabular-nums">
-                    {formatINR(cartTotals.freeShippingRemaining)}
-                  </span>{' '}
-                  more for complimentary Pan-India delivery.
-                </>
-              ) : (
-                'Complimentary Pan-India standard delivery unlocked.'
-              )}
-            </p>
-            <div className="mt-2 h-1 w-full bg-[#D9D0C2] overflow-hidden">
-              <div
-                className="h-full bg-[#C5A46D] transition-all duration-300"
-                style={{ width: `${freeShippingProgress}%` }}
-              />
-            </div>
+          <div className="px-6 py-2.5 bg-[#E9E1D5]/40 border-b border-[#E9E1D5] flex items-center justify-between text-xs text-[#171717]">
+            <span className="font-medium tracking-wide">Pan-India Delivery</span>
+            <span className="text-[#85817B]">Included in product price</span>
           </div>
         )}
 
@@ -201,7 +174,7 @@ export function CartDrawer() {
               </div>
             )}
             <p className="text-[11px] text-[#85817B]">
-              Shipping & optional COD fees calculated at checkout.
+              Delivery is included in the product price.
             </p>
             <div className="grid grid-cols-2 gap-3 pt-1">
               <Link

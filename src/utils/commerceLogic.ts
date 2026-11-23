@@ -287,25 +287,10 @@ export function calculateCartTotals(
   );
 
   const discountedSubtotal = Math.max(0, subtotal - couponDiscount);
-  const freeShippingRemaining = Math.max(
-    0,
-    shippingConfig.freeShippingThreshold - discountedSubtotal,
-  );
-
-  const deliveryMethod = options?.deliveryMethod ?? 'standard';
-  let shippingFee = 0;
-  if (itemCount > 0) {
-    if (deliveryMethod === 'standard') {
-      shippingFee =
-        discountedSubtotal >= shippingConfig.freeShippingThreshold
-          ? 0
-          : shippingConfig.standardFee;
-    } else if (deliveryMethod === 'express') {
-      shippingFee = shippingConfig.expressFee;
-    } else if (deliveryMethod === 'priority') {
-      shippingFee = shippingConfig.priorityFee;
-    }
-  }
+  // All-inclusive delivery policy: Delivery costs are accounted for within selling price / business margin.
+  // Customers never pay separate delivery fees across any order value or courier route.
+  const freeShippingRemaining = 0;
+  const shippingFee = 0;
 
   const codFee =
     itemCount > 0 && options?.paymentMethod === 'cod' ? shippingConfig.codFee : 0;
@@ -314,7 +299,7 @@ export function calculateCartTotals(
   const discountRatio = subtotal > 0 ? discountedSubtotal / subtotal : 0;
   const gstAmount = Math.round(weightedGstNumerator * discountRatio);
   const taxableValue = Math.max(0, discountedSubtotal - gstAmount);
-  const total = discountedSubtotal + shippingFee + codFee;
+  const total = discountedSubtotal + codFee;
 
   return {
     itemCount,

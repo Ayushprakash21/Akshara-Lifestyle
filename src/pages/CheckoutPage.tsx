@@ -523,18 +523,22 @@ export function CheckoutPage() {
               {/* Financial Ledger */}
               <div className="pt-4 border-t border-[#E9E1D5] space-y-2 text-sm tabular-nums">
                 <div className="flex justify-between text-[#85817B]">
+                  <span>Subtotal</span>
+                  <span>{formatINR(confirmedOrder.subtotal)}</span>
+                </div>
+                {confirmedOrder.couponDiscount > 0 && (
+                  <div className="flex justify-between text-[#9A7A45]">
+                    <span>Privilege Discount ({confirmedOrder.couponCode})</span>
+                    <span>−{formatINR(confirmedOrder.couponDiscount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-[#85817B]">
                   <span>Taxable Value</span>
                   <span>{formatINR(confirmedOrder.taxableValue)}</span>
                 </div>
                 <div className="flex justify-between text-[#85817B]">
                   <span>Included GST</span>
                   <span>{formatINR(confirmedOrder.gstAmount)}</span>
-                </div>
-                <div className="flex justify-between text-[#85817B]">
-                  <span>Shipping & Packaging</span>
-                  <span>
-                    {confirmedOrder.shippingFee === 0 ? 'Complimentary' : formatINR(confirmedOrder.shippingFee)}
-                  </span>
                 </div>
                 {confirmedOrder.codFee > 0 && (
                   <div className="flex justify-between text-[#85817B]">
@@ -546,6 +550,9 @@ export function CheckoutPage() {
                   <span>Grand Total Paid / Payable</span>
                   <span className="text-[#171717]">{formatINR(confirmedOrder.total)}</span>
                 </div>
+                <p className="text-[11px] text-[#85817B] pt-1">
+                  Delivery is included in the product price.
+                </p>
               </div>
             </div>
 
@@ -634,14 +641,19 @@ export function CheckoutPage() {
                       <span>−{formatINR(liveTotals.couponDiscount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-[#85817B]">
-                    <span>Shipping</span>
-                    <span>{liveTotals.shippingFee === 0 ? 'Complimentary' : formatINR(liveTotals.shippingFee)}</span>
-                  </div>
+                  {liveTotals.codFee > 0 && (
+                    <div className="flex justify-between text-[#85817B]">
+                      <span>Doorstep Handling Fee</span>
+                      <span>{formatINR(liveTotals.codFee)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-semibold text-sm pt-2 text-[#171717]">
                     <span>Total Amount</span>
                     <span>{formatINR(liveTotals.total)}</span>
                   </div>
+                  <p className="text-[11px] text-[#85817B] pt-1">
+                    Delivery is included in the product price.
+                  </p>
                 </dl>
               </div>
             )}
@@ -1141,7 +1153,7 @@ export function CheckoutPage() {
                       Stage 03
                     </span>
                     <h2 className="font-editorial text-2xl sm:text-3xl text-[#171717]">
-                      Select Delivery Method
+                      Delivery Method
                     </h2>
                     <p className="mt-1 text-xs text-[#85817B]">
                       Every dispatch is packaged in tamper-evident reinforced boxes with full transit insurance.
@@ -1149,70 +1161,25 @@ export function CheckoutPage() {
                   </div>
 
                   <div className="space-y-4">
-                    {[
-                      {
-                        id: 'standard' as const,
-                        title: 'Standard Insured Courier',
-                        carrier: 'BlueDart Ground / Delhivery Surface',
-                        eta: pinService?.estimatedDateText ?? '3–5 Business Days',
-                        price:
-                          liveTotals.subtotal - liveTotals.couponDiscount >=
-                          shippingConfig.freeShippingThreshold
-                            ? 'Complimentary'
-                            : formatINR(shippingConfig.standardFee),
-                        note: `Complimentary for all domestic orders exceeding ${formatINR(shippingConfig.freeShippingThreshold)}.`,
-                      },
-                      {
-                        id: 'express' as const,
-                        title: 'Express Air Priority Dispatch',
-                        carrier: 'BlueDart Air Express / Air India Cargo',
-                        eta: '1–2 Business Days (Metros & Major Hubs)',
-                        price: formatINR(shippingConfig.expressFee),
-                        note: 'Same-day flight routing with live GPS tracking notifications via SMS.',
-                      },
-                      {
-                        id: 'priority' as const,
-                        title: 'White-Glove Atelier & Gift Courier',
-                        carrier: 'Special Handling Concierge',
-                        eta: '1–2 Business Days',
-                        price: formatINR(shippingConfig.priorityFee),
-                        note: 'Hand-tied satin ribbon, signature ivory linen gift box, and personalized stationery note.',
-                      },
-                    ].map((opt) => {
-                      const isSelected = deliveryMethod === opt.id;
-                      return (
-                        <label
-                          key={opt.id}
-                          className={`flex items-start justify-between gap-4 p-5 border cursor-pointer transition-all ${
-                            isSelected
-                              ? 'border-[#171717] bg-[#F8F6F1] shadow-sm'
-                              : 'border-[#E9E1D5] bg-white hover:border-[#85817B]'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3.5">
-                            <input
-                              type="radio"
-                              name="deliveryMethod"
-                              checked={isSelected}
-                              onChange={() => setDeliveryMethod(opt.id)}
-                              className="mt-1 accent-[#171717]"
-                            />
-                            <div className="space-y-1">
-                              <p className="text-sm font-semibold text-[#171717]">{opt.title}</p>
-                              <p className="text-xs text-[#C5A46D] font-medium">
-                                Estimated Arrival: {opt.eta}
-                              </p>
-                              <p className="text-[11px] text-[#85817B]">
-                                {opt.carrier} · {opt.note}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-sm font-semibold tabular-nums text-[#171717] shrink-0">
-                            {opt.price}
-                          </span>
-                        </label>
-                      );
-                    })}
+                    <div className="flex items-start justify-between gap-4 p-5 border border-[#171717] bg-[#F8F6F1] shadow-sm">
+                      <div className="flex items-start gap-3.5">
+                        <div className="mt-1 w-4 h-4 rounded-full border-2 border-[#171717] flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-[#171717]" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-[#171717]">Standard Delivery</p>
+                          <p className="text-xs text-[#C5A46D] font-medium">
+                            Estimated Arrival: {pinService?.estimatedDateText ?? '3–5 Business Days'}
+                          </p>
+                          <p className="text-[11px] text-[#85817B]">
+                            BlueDart Ground / Delhivery Surface · Insured pan-India courier transit.
+                          </p>
+                          <p className="text-xs font-medium text-[#171717] pt-1">
+                            Delivery is included in the product price.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="pt-4 flex items-center justify-between border-t border-[#E9E1D5]">
@@ -1485,19 +1452,19 @@ export function CheckoutPage() {
                     {/* Shipping Method Box */}
                     <div className="p-4 bg-[#F8F6F1] border border-[#E9E1D5] space-y-1.5 relative">
                       <div className="flex items-center justify-between text-[#85817B]">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.14em]">Courier Mode</span>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.14em]">Delivery Method</span>
                         <button
                           type="button"
                           onClick={() => setStep(3)}
                           className="text-[#C5A46D] hover:underline"
                         >
-                          Change
+                          View
                         </button>
                       </div>
-                      <p className="font-semibold text-[#171717] capitalize">{deliveryMethod} Insured</p>
+                      <p className="font-semibold text-[#171717]">Standard Delivery</p>
                       <p className="text-[#C5A46D]">{pinService?.estimatedDateText ?? '3–5 Business Days'}</p>
-                      <p className="text-[#85817B]">
-                        {liveTotals.shippingFee === 0 ? 'Complimentary' : formatINR(liveTotals.shippingFee)}
+                      <p className="text-xs text-[#85817B]">
+                        Delivery is included in the product price.
                       </p>
                     </div>
 
@@ -1709,12 +1676,6 @@ export function CheckoutPage() {
                       <dd>−{formatINR(liveTotals.couponDiscount)}</dd>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <dt className="text-[#85817B]">Insured Shipping</dt>
-                    <dd className={liveTotals.shippingFee === 0 ? 'text-[#2D6A4F] font-medium' : ''}>
-                      {liveTotals.shippingFee === 0 ? 'Complimentary' : formatINR(liveTotals.shippingFee)}
-                    </dd>
-                  </div>
                   {liveTotals.codFee > 0 && (
                     <div className="flex justify-between">
                       <dt className="text-[#85817B]">Cash on Delivery Handling</dt>
@@ -1731,6 +1692,9 @@ export function CheckoutPage() {
                     <dt>Total Payable</dt>
                     <dd className="text-[#171717]">{formatINR(liveTotals.total)}</dd>
                   </div>
+                  <p className="text-[11px] text-[#85817B] pt-1">
+                    Delivery is included in the product price.
+                  </p>
                 </dl>
               </div>
 
@@ -1746,7 +1710,7 @@ export function CheckoutPage() {
                   </div>
                   <div className="flex items-start gap-2.5">
                     <Truck className="w-4 h-4 text-[#C5A46D] shrink-0 mt-0.5" strokeWidth={1.5} />
-                    <span>Complimentary pan-India insured courier dispatch on orders above ₹4,999.</span>
+                    <span>All-inclusive pan-India insured courier delivery on every order.</span>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <RotateCcw className="w-4 h-4 text-[#C5A46D] shrink-0 mt-0.5" strokeWidth={1.5} />

@@ -196,10 +196,25 @@ test('calculateCartTotals computes subtotal, coupon, GST extraction, shipping, a
 
   assert.equal(totals.subtotal, 8400);
   assert.equal(totals.couponDiscount, 840);
-  assert.equal(totals.shippingFee, 0); // 7560 >= 4999 free shipping threshold
+  assert.equal(totals.shippingFee, 0); // All-inclusive delivery policy: shippingFee is always 0
   assert.equal(totals.codFee, 99);
   assert.equal(totals.total, 7659);
   assert.equal(totals.taxableValue + totals.gstAmount, 7560);
+});
+
+test('calculateCartTotals enforces all-inclusive shipping policy with zero delivery fee on small orders', () => {
+  const totals = calculateCartTotals(
+    [{ id: 'p2::v1', productId: 'p2', variantId: 'v2', quantity: 1 }],
+    SAMPLE_PRODUCTS,
+    SAMPLE_COUPONS,
+    SAMPLE_SHIPPING,
+    { deliveryMethod: 'standard', paymentMethod: 'upi' },
+  );
+
+  assert.equal(totals.subtotal, 3800);
+  assert.equal(totals.shippingFee, 0);
+  assert.equal(totals.freeShippingRemaining, 0);
+  assert.equal(totals.total, 3800);
 });
 
 test('evaluateCoupon rejects below minimum order value', () => {

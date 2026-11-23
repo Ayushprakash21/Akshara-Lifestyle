@@ -12,7 +12,6 @@ export function CartPage() {
     products,
     coupons,
     cartTotals,
-    shippingConfig,
     appliedCouponCode,
     updateCartQuantity,
     removeFromCart,
@@ -242,12 +241,6 @@ export function CartPage() {
                 <dd>−{formatINR(cartTotals.couponDiscount)}</dd>
               </div>
             )}
-            <div className="flex justify-between">
-              <dt className="text-[#85817B]">Estimated Standard Shipping</dt>
-              <dd className="text-[#171717]">
-                {cartTotals.shippingFee === 0 ? 'Complimentary' : formatINR(cartTotals.shippingFee)}
-              </dd>
-            </div>
             <div className="flex justify-between text-xs text-[#85817B]">
               <dt>Included Indian GST Component</dt>
               <dd>{formatINR(cartTotals.gstAmount)}</dd>
@@ -258,9 +251,8 @@ export function CartPage() {
             </div>
           </dl>
 
-          <p className="text-[11px] text-[#85817B]">
-            Complimentary standard shipping on orders above{' '}
-            {formatINR(shippingConfig.freeShippingThreshold)}.
+          <p className="text-[12px] text-[#85817B]">
+            Delivery is included in the product price.
           </p>
 
           <Link

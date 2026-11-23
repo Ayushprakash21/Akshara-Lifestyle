@@ -285,8 +285,8 @@ export function NotFoundPage() {
                 Heritage & Assurance
               </p>
               <p className="text-xs text-[#9E9A93] leading-relaxed">
-                All domestic deliveries include tamper-proof insured transit, complimentary pan-India
-                shipping on orders above ₹2,000, and a 15-day return privilege.
+                All domestic deliveries include tamper-proof insured transit, all-inclusive pan-India
+                delivery on every order, and a 15-day return privilege.
               </p>
               <div className="pt-4 text-xs font-mono text-[#C5A46D]">
                 Concierge: +91 (0) 22 4988 2000
