@@ -21,6 +21,11 @@ const firebaseConfig = {
 };
 
 function evaluateFirebaseConfig(): { isConfigured: boolean; missingFields: string[] } {
+  const backendProvider = (import.meta.env.VITE_BACKEND_PROVIDER || 'firebase').toLowerCase();
+  if (backendProvider !== 'firebase') {
+    return { isConfigured: false, missingFields: ['VITE_BACKEND_PROVIDER=firebase'] };
+  }
+
   const missing: string[] = [];
   if (!firebaseConfig.apiKey) missing.push('VITE_FIREBASE_API_KEY');
   if (!firebaseConfig.authDomain) missing.push('VITE_FIREBASE_AUTH_DOMAIN');

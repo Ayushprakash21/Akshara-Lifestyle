@@ -52,7 +52,8 @@ export interface CatalogRepository {
 }
 
 export function getActiveIntegrationStatus(): BackendProviderConfig {
-  const hasFirebase = Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
+  const backendProvider = (import.meta.env.VITE_BACKEND_PROVIDER || 'firebase').toLowerCase();
+  const hasFirebase = backendProvider === 'firebase' && Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
   const paymentsEnabled = import.meta.env.PAYMENTS_ENABLED === 'true';
   const hasRazorpay = paymentsEnabled && Boolean(import.meta.env.RAZORPAY_KEY_ID);
 
