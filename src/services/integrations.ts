@@ -4,16 +4,15 @@ import { checkPincodeServiceability } from '../utils/commerceLogic';
 /**
  * Production Backend & Third-Party Integration Interfaces
  *
- * When environment credentials are absent, AKSHARA LIFESTYLE runs in a clearly
- * labelled local Demo Mode with browser-persisted state. Swap these adapters
- * with live Firebase/Supabase, Razorpay, Shiprocket, Resend, and MSG91 clients
- * once production environment variables are provisioned on the backend.
+ * Firebase is the official primary backend provider for AKSHARA LIFESTYLE.
+ * When environment credentials are not yet populated, AKSHARA LIFESTYLE runs in a
+ * graceful local Demo Mode with browser-persisted state.
  */
 
 export interface BackendProviderConfig {
   mode: 'demo' | 'live';
-  databaseProvider: 'local-demo' | 'firebase' | 'supabase';
-  paymentGateway: 'razorpay-demo' | 'razorpay-live';
+  databaseProvider: 'local-demo' | 'firebase';
+  paymentGateway: 'razorpay-demo' | 'razorpay-live' | 'payments-disabled';
   shippingProvider: 'demo-estimator' | 'shiprocket' | 'delhivery';
   emailProvider: 'demo-log' | 'resend' | 'sendgrid';
   smsOtpProvider: 'demo-log' | 'msg91' | 'twilio';
@@ -54,17 +53,17 @@ export interface CatalogRepository {
 
 export function getActiveIntegrationStatus(): BackendProviderConfig {
   const hasFirebase = Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
-  const hasSupabase = Boolean(import.meta.env.VITE_SUPABASE_URL);
-  const hasRazorpay = Boolean(import.meta.env.VITE_RAZORPAY_KEY_ID);
+  const paymentsEnabled = import.meta.env.PAYMENTS_ENABLED === 'true';
+  const hasRazorpay = paymentsEnabled && Boolean(import.meta.env.RAZORPAY_KEY_ID);
 
   return {
-    mode: hasFirebase || hasSupabase ? 'live' : 'demo',
-    databaseProvider: hasFirebase
-      ? 'firebase'
-      : hasSupabase
-        ? 'supabase'
-        : 'local-demo',
-    paymentGateway: hasRazorpay ? 'razorpay-live' : 'razorpay-demo',
+    mode: hasFirebase ? 'live' : 'demo',
+    databaseProvider: hasFirebase ? 'firebase' : 'local-demo',
+    paymentGateway: hasRazorpay
+      ? 'razorpay-live'
+      : paymentsEnabled
+        ? 'razorpay-demo'
+        : 'payments-disabled',
     shippingProvider: 'demo-estimator',
     emailProvider: 'demo-log',
     smsOtpProvider: 'demo-log',
