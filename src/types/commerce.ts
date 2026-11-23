@@ -10,6 +10,7 @@ export type UserRole =
 export type CategorySlug =
   | 'fashion-clothing'
   | 'jewellery'
+  | 'watches'
   | 'beauty-cosmetics'
   | 'home-decor'
   | 'electronics'
@@ -59,6 +60,14 @@ export interface Product {
   shippingNotes: string;
   returnPolicyDays: number;
   weightGrams: number;
+  tags?: string[];
+  // Specialized Horology fields
+  movement?: string;
+  dialColor?: string;
+  strapMaterial?: string;
+  caseMaterial?: string;
+  watchStyle?: string;
+  warrantyYears?: number;
   createdAt: string;
   status: 'active' | 'draft' | 'archived';
 }
@@ -307,6 +316,12 @@ export interface FilterState {
     | 'price-desc'
     | 'bestselling'
     | 'top-rated';
+  // Horology & Watch Filters
+  movements?: string[];
+  dialColors?: string[];
+  strapMaterials?: string[];
+  caseMaterials?: string[];
+  watchStyles?: string[];
 }
 
 export interface PincodeServiceability {

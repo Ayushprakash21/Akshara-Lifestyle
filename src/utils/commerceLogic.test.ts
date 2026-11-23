@@ -89,6 +89,42 @@ const SAMPLE_PRODUCTS: Product[] = [
   },
 ];
 
+const SAMPLE_WATCH: Product = {
+  id: 'p3',
+  slug: 'kala-automatic-dress-watch',
+  sku: 'AK-WAT-001',
+  name: 'Kāla 38.5mm Automatic Dress Watch',
+  brandId: 'b3',
+  brandName: 'AKSHARA Horlogerie',
+  categorySlug: 'watches',
+  subcategory: 'Automatic',
+  shortDescription: 'Japanese high-beat mechanical dress watch',
+  description: 'High-beat automatic with exhibition caseback.',
+  price: 24990,
+  originalPrice: 29500,
+  gstRate: 18,
+  hsnCode: '910221',
+  images: ['/watch1.jpg'],
+  badge: 'NEW',
+  isNewArrival: true,
+  codEligible: true,
+  movement: 'automatic',
+  dialColor: 'Sunburst Champagne Gold',
+  strapMaterial: 'Full-Grain Italian Leather',
+  caseMaterial: '316L Stainless Steel',
+  watchStyle: 'dress',
+  tags: ['dress watch', 'mechanical', 'automatic', 'mens watch'],
+  variants: [
+    { id: 'v4', sku: 'AK-WAT-001-GOLD', colorName: 'Champagne Gold', colorHex: '#C5A46D', size: '38.5mm', stock: 12 },
+  ],
+  specifications: [],
+  shippingNotes: 'Tamper-evident insured delivery.',
+  returnPolicyDays: 15,
+  weightGrams: 110,
+  createdAt: '2026-11-20T10:00:00Z',
+  status: 'active',
+};
+
 const SAMPLE_COUPONS: Coupon[] = [
   {
     id: 'c1',
@@ -273,4 +309,89 @@ test('computeAdminMetrics calculates sales, AOV, and low stock accurately', () =
   assert.equal(metrics.averageOrderValue, 8400);
   assert.equal(metrics.pendingOrders, 1);
   assert.equal(metrics.lowStockProducts, 1); // p2 has stock 3 <= 5
+});
+
+test('filterAndSortProducts filters watches by category, movement, case metallurgy, and collection subcategory', () => {
+  const catalog = [...SAMPLE_PRODUCTS, SAMPLE_WATCH];
+
+  // 1. Filter by category watches
+  const watchCategoryResult = filterAndSortProducts(
+    catalog,
+    {
+      categorySlug: 'watches',
+      searchQuery: '',
+      brands: [],
+      colors: [],
+      sizes: [],
+      inStockOnly: false,
+      minRating: 0,
+      minDiscount: 0,
+      newArrivalsOnly: false,
+      sortBy: 'recommended',
+    },
+    [],
+  );
+  assert.equal(watchCategoryResult.length, 1);
+  assert.equal(watchCategoryResult[0].id, 'p3');
+
+  // 2. Filter by movement
+  const autoResult = filterAndSortProducts(
+    catalog,
+    {
+      categorySlug: 'watches',
+      searchQuery: '',
+      brands: [],
+      colors: [],
+      sizes: [],
+      inStockOnly: false,
+      minRating: 0,
+      minDiscount: 0,
+      newArrivalsOnly: false,
+      sortBy: 'recommended',
+      movements: ['automatic'],
+    },
+    [],
+  );
+  assert.equal(autoResult.length, 1);
+
+  // 3. Filter by non-matching movement
+  const quartzResult = filterAndSortProducts(
+    catalog,
+    {
+      categorySlug: 'watches',
+      searchQuery: '',
+      brands: [],
+      colors: [],
+      sizes: [],
+      inStockOnly: false,
+      minRating: 0,
+      minDiscount: 0,
+      newArrivalsOnly: false,
+      sortBy: 'recommended',
+      movements: ['quartz'],
+    },
+    [],
+  );
+  assert.equal(quartzResult.length, 0);
+
+  // 4. Filter by Men's Collection subcategory
+  const mensResult = filterAndSortProducts(
+    catalog,
+    {
+      categorySlug: 'watches',
+      subcategory: "Men's Collection",
+      searchQuery: '',
+      brands: [],
+      colors: [],
+      sizes: [],
+      inStockOnly: false,
+      minRating: 0,
+      minDiscount: 0,
+      newArrivalsOnly: false,
+      sortBy: 'recommended',
+    },
+    [],
+  );
+  assert.equal(mensResult.length, 1);
+  assert.equal(mensResult[0].id, 'p3');
 });

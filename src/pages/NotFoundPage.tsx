@@ -229,6 +229,11 @@ export function NotFoundPage() {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/category/watches" className="hover:text-white transition-colors">
+                    Timepieces & Horology
+                  </Link>
+                </li>
+                <li>
                   <Link to="/category/beauty-cosmetics" className="hover:text-white transition-colors">
                     Haute Parfumerie & Skincare
                   </Link>

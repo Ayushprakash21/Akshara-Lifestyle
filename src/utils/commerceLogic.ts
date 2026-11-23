@@ -426,12 +426,22 @@ export function filterAndSortProducts(
       return false;
     }
 
-    if (
-      filters.subcategory &&
-      filters.subcategory !== 'All' &&
-      product.subcategory.toLowerCase() !== filters.subcategory.toLowerCase()
-    ) {
-      return false;
+    if (filters.subcategory && filters.subcategory !== 'All') {
+      const sub = filters.subcategory.toLowerCase();
+      const productSub = product.subcategory.toLowerCase();
+      const isSubMatch = productSub === sub;
+      const isTagMatch = (product.tags ?? []).some(
+        (t: string) =>
+          t.toLowerCase().includes(sub) ||
+          (sub.includes("men's") && (t.toLowerCase().includes('men') || t.toLowerCase().includes('unisex'))) ||
+          (sub.includes("women's") && (t.toLowerCase().includes('women') || t.toLowerCase().includes('unisex'))),
+      );
+      const isMovementMatch = Boolean(product.movement?.toLowerCase().includes(sub));
+      const isStyleMatch = Boolean(product.watchStyle?.toLowerCase() === sub);
+
+      if (!isSubMatch && !isTagMatch && !isMovementMatch && !isStyleMatch) {
+        return false;
+      }
     }
 
     if (filters.searchQuery && filters.searchQuery.trim()) {
@@ -481,6 +491,69 @@ export function filterAndSortProducts(
 
     if (filters.newArrivalsOnly && !product.isNewArrival && product.badge !== 'NEW') {
       return false;
+    }
+
+    // Horology & Watch Filters
+    if (filters.movements && filters.movements.length > 0) {
+      const movementSpec =
+        product.specifications.find((s) => s.label.toLowerCase() === 'movement')?.value || '';
+      const matchesMovement = filters.movements.some(
+        (m) =>
+          movementSpec.toLowerCase().includes(m.toLowerCase()) ||
+          product.subcategory.toLowerCase().includes(m.toLowerCase()) ||
+          product.name.toLowerCase().includes(m.toLowerCase()) ||
+          product.description.toLowerCase().includes(m.toLowerCase()),
+      );
+      if (!matchesMovement) return false;
+    }
+
+    if (filters.dialColors && filters.dialColors.length > 0) {
+      const dialSpec =
+        product.specifications.find((s) => s.label.toLowerCase().includes('dial'))?.value || '';
+      const matchesDial = filters.dialColors.some(
+        (c) =>
+          dialSpec.toLowerCase().includes(c.toLowerCase()) ||
+          product.variants.some((v) => v.colorName.toLowerCase().includes(c.toLowerCase())) ||
+          product.description.toLowerCase().includes(c.toLowerCase()),
+      );
+      if (!matchesDial) return false;
+    }
+
+    if (filters.strapMaterials && filters.strapMaterials.length > 0) {
+      const strapSpec =
+        product.specifications.find(
+          (s) =>
+            s.label.toLowerCase().includes('strap') ||
+            s.label.toLowerCase().includes('bracelet'),
+        )?.value || '';
+      const matchesStrap = filters.strapMaterials.some(
+        (sm) =>
+          strapSpec.toLowerCase().includes(sm.toLowerCase()) ||
+          product.description.toLowerCase().includes(sm.toLowerCase()),
+      );
+      if (!matchesStrap) return false;
+    }
+
+    if (filters.caseMaterials && filters.caseMaterials.length > 0) {
+      const caseSpec =
+        product.specifications.find((s) => s.label.toLowerCase().includes('case material'))
+          ?.value || '';
+      const matchesCase = filters.caseMaterials.some(
+        (cm) =>
+          caseSpec.toLowerCase().includes(cm.toLowerCase()) ||
+          product.description.toLowerCase().includes(cm.toLowerCase()),
+      );
+      if (!matchesCase) return false;
+    }
+
+    if (filters.watchStyles && filters.watchStyles.length > 0) {
+      const matchesStyle = filters.watchStyles.some(
+        (st) =>
+          product.subcategory.toLowerCase().includes(st.toLowerCase()) ||
+          product.name.toLowerCase().includes(st.toLowerCase()) ||
+          product.description.toLowerCase().includes(st.toLowerCase()),
+      );
+      if (!matchesStyle) return false;
     }
 
     return true;

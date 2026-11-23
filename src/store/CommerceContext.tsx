@@ -169,12 +169,18 @@ interface CommerceContextValue {
 const CommerceContext = createContext<CommerceContextValue | null>(null);
 
 export function CommerceProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(() =>
-    readStorage('products', SEED_PRODUCTS),
-  );
-  const [categories, setCategories] = useState<Category[]>(() =>
-    readStorage('categories', SEED_CATEGORIES),
-  );
+  const [products, setProducts] = useState<Product[]>(() => {
+    const stored = readStorage<Product[]>('products', SEED_PRODUCTS);
+    const existingIds = new Set(stored.map((p) => p.id));
+    const missing = SEED_PRODUCTS.filter((p) => !existingIds.has(p.id));
+    return missing.length > 0 ? [...stored, ...missing] : stored;
+  });
+  const [categories, setCategories] = useState<Category[]>(() => {
+    const stored = readStorage<Category[]>('categories', SEED_CATEGORIES);
+    const existingSlugs = new Set(stored.map((c) => c.slug));
+    const missing = SEED_CATEGORIES.filter((c) => !existingSlugs.has(c.slug));
+    return missing.length > 0 ? [...stored, ...missing] : stored;
+  });
   const [reviews, setReviews] = useState<Review[]>(() =>
     readStorage('reviews', SEED_REVIEWS),
   );
