@@ -46,7 +46,7 @@ export function NotFoundPage() {
             className="group flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C5A46D]"
             aria-label="AKSHARA LIFESTYLE Home"
           >
-            <BrandLogo variant="dark" layout="horizontal" />
+            <BrandLogo variant="dark" layout="horizontal" mobileResponsive />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-[11px] uppercase tracking-[0.2em] text-[#55524E]">
@@ -138,6 +138,7 @@ export function NotFoundPage() {
 
           {/* Brand Signature and Tagline */}
           <div className="pt-2 text-center select-none" aria-label="Brand Signature">
+            <BrandLogo variant="dark" layout="emblem" size="md" className="mx-auto mb-2.5 opacity-90" />
             <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#171717]">
               AKSHARA LIFESTYLE
             </p>

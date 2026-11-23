@@ -58,7 +58,7 @@ export function Header() {
               to="/"
               className="inline-flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C5A46D]"
             >
-              <BrandLogo variant="dark" layout="horizontal" />
+              <BrandLogo variant="dark" layout="horizontal" mobileResponsive />
             </Link>
           </div>
 
