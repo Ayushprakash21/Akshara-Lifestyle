@@ -10,7 +10,8 @@
   --color-pure: #FFFFFF;
 
   --font-serif: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-nav: "Jost", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
@@ -33,6 +34,14 @@
 
 .font-editorial {
   font-family: var(--font-serif);
+}
+
+.font-nav {
+  font-family: var(--font-nav);
+}
+
+.font-body {
+  font-family: var(--font-sans);
 }
 
 .tabular-nums {

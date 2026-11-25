@@ -237,7 +237,7 @@ export function AdminModuleContent({ activeModule }: { activeModule: AdminModule
         originalPrice: Math.max(Number(newProd.originalPrice) || 2990, Number(newProd.price) || 2990),
         gstRate: Number(newProd.gstRate) || 12,
         hsnCode: '6204',
-        images: [ASSETS.fashionBlazer],
+        images: [ASSETS.fashionMerino],
         badge: 'NEW',
         isNewArrival: true,
         codEligible: true,
