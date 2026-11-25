@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ArrowUpRight, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Star, ShieldCheck } from 'lucide-react';
 import { useCommerce } from '../store/CommerceContext';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
-import { ASSETS } from '../services/seedData';
+import { ASSETS, SEED_REVIEWS } from '../services/seedData';
 import { ProductCard } from '../components/ProductCard';
 import { SafeImage } from '../components/SafeImage';
-import { CinematicIntro } from '../components/motion/CinematicIntro';
-import { SignatureHero } from '../components/motion/SignatureHero';
-import { EditorialChapters } from '../components/motion/EditorialChapters';
+import { RainbowFashionHero } from '../components/motion/RainbowFashionHero';
+import { FlagshipCampaignSpotlight } from '../components/motion/FlagshipCampaignSpotlight';
+import { CoherentCategoryHighlights } from '../components/motion/CoherentCategoryHighlights';
 
 type ShowcaseTab = 'trending' | 'new' | 'bestsellers' | 'offers';
 
@@ -24,7 +24,6 @@ export function HomePage() {
   const [activeTab, setActiveTab] = useState<ShowcaseTab>('trending');
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterError, setNewsletterError] = useState('');
-  const [forceReplayIntro, setForceReplayIntro] = useState(false);
 
   useDocumentMeta({
     title: 'Everyday, Elevated',
@@ -61,14 +60,19 @@ export function HomePage() {
 
   const midpageBanner = banners.find((b) => b.placement === 'midpage' && b.active);
 
+  const approvedReviews = useMemo(
+    () => SEED_REVIEWS.filter((r) => r.status === 'approved' && r.verifiedPurchase).slice(0, 3),
+    [],
+  );
+
   const lookbookItems = useMemo(
     () => [
+      { image: ASSETS.rainbowPage1, label: 'Rainbow Organza Silk', to: '/product/rainbow-elegance-handloom-organza-silk-ensemble' },
       { image: ASSETS.fashionKurta, label: 'Chanderi Silk Drapery', to: '/product/ivory-chanderi-silk-draped-kurta-set' },
+      { image: ASSETS.watchDressHero, label: 'Kala Automatic 38mm', to: '/product/akshara-horlogerie-kala-38mm-automatic-dress-watch' },
       { image: ASSETS.jewelleryCuff, label: 'Jaipur Hammered Gold', to: '/product/hammered-champagne-gold-cuff-and-hoops' },
-      { image: ASSETS.beautyParfum, label: 'Mysore Sandalwood Extrait', to: '/product/sandalwood-white-oud-eau-de-parfum' },
-      { image: ASSETS.decorVessels, label: 'Bengaluru Matte Stoneware', to: '/product/trio-matte-stoneware-architectural-vessels' },
-      { image: ASSETS.electronicsSpeaker, label: 'Kala Acoustic Wool', to: '/product/kala-monolith-acoustic-wool-wireless-speaker' },
-      { image: ASSETS.bagsCrossbody, label: 'Saddle Leather Carry', to: '/product/miras-camel-smooth-leather-saddle-crossbody' },
+      { image: ASSETS.bagsTote, label: 'Architectural Pebble Tote', to: '/product/miras-architectural-structured-leather-tote' },
+      { image: ASSETS.decorLamp, label: 'Fluted Travertine Lamp', to: '/product/monolith-fluted-travertine-stone-table-lamp' },
     ],
     [],
   );
@@ -84,36 +88,30 @@ export function HomePage() {
   };
 
   return (
-    <div className="relative w-full bg-[#171717] text-[#F7F3EB] overflow-x-hidden">
-      {/* 1. Cinematic Opening Intro Sequence (Skippable & Reduced-Motion Aware) */}
-      <CinematicIntro
-        forceShow={forceReplayIntro}
-        onComplete={() => setForceReplayIntro(false)}
-      />
+    <div className="relative w-full bg-[#151413] text-[#F7F3EB]">
+      {/* 1. Proper Full-Screen Motion-Led Fashion Campaign Hero */}
+      <RainbowFashionHero />
 
-      {/* 2. Signature Hero: Pinned Scroll-Driven Product Animation */}
-      <SignatureHero />
+      {/* 2. Flagship Campaign Spotlight (Interactive Multi-View & Immediate Purchase) */}
+      <FlagshipCampaignSpotlight />
 
-      {/* 3. Distinct Editorial Sections (Chapters A through F) */}
-      <EditorialChapters />
-
-      {/* 4. Shop by Category — High-Contrast Architectural Grid */}
+      {/* 3. Shop by Category — Dedicated Clean Taxonomy */}
       <section className="bg-[#141312] text-[#F7F3EB] border-t border-white/10 py-20 lg:py-28">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="max-w-[1380px] mx-auto px-4 sm:px-8 lg:px-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12 border-b border-white/10 pb-6">
             <div>
               <p className="text-[10px] font-mono uppercase tracking-[0.26em] text-[#C6A15B]">
-                CURATED TAXONOMY
+                STOREFRONT DIRECTORY
               </p>
               <h2 className="mt-2 font-editorial text-3xl sm:text-5xl text-[#F7F3EB]">
-                Seven Dedicated Departments
+                Seven Curated Departments
               </h2>
             </div>
             <Link
               to="/shop"
               className="text-xs font-mono tracking-[0.16em] uppercase text-[#C6A15B] hover:text-white inline-flex items-center gap-1.5 pb-1 self-start sm:self-auto"
             >
-              View Complete Archive
+              <span>View Complete Catalogue</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -131,7 +129,7 @@ export function HomePage() {
                     alt={category.name}
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0B]/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0B]/85 via-transparent to-transparent" />
                   <div className="absolute inset-x-3 bottom-3">
                     <h3 className="font-editorial text-lg text-[#F7F3EB] leading-tight group-hover:text-[#C6A15B] transition-colors">
                       {category.shortName}
@@ -147,13 +145,16 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 5. Clean Shopping Collection Grid: Trending / New / Bestsellers / Limited Offers */}
+      {/* 4. Coherent Category Highlights (Dedicated Campaigns: Horology, Jewellery, Bags, Living) */}
+      <CoherentCategoryHighlights />
+
+      {/* 5. Clean Shopping Collection Grid: Trending / New Arrivals / Best Sellers / Limited Offers */}
       <section className="bg-[#F7F3EB] text-[#171717] py-20 lg:py-28 border-t border-[#E9E1D5]">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="max-w-[1380px] mx-auto px-4 sm:px-8 lg:px-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-[#C6A15B] font-semibold">
-                ACQUISITION SHOWCASE
+                CURATED SELECTION
               </p>
               <h2 className="mt-2 font-editorial text-4xl sm:text-5xl text-[#171717]">
                 {activeTab === 'trending' && 'Trending Now'}
@@ -223,7 +224,7 @@ export function HomePage() {
       {/* 6. Promotional Midpage Banner */}
       {midpageBanner && (
         <section className="bg-[#1C1815] text-[#F7F3EB] border-y border-white/10 px-6 sm:px-12 py-12">
-          <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="max-w-[1380px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-[#C6A15B]">
                 SEASONAL PRIVILEGE
@@ -246,7 +247,7 @@ export function HomePage() {
 
       {/* 7. Curated Lifestyle Editorial & Brand Story */}
       <section className="bg-[#141211] text-[#F7F3EB] border-b border-white/10 py-20 lg:py-28">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="max-w-[1380px] mx-auto px-4 sm:px-8 lg:px-12">
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
             <div className="lg:col-span-7">
               <div className="aspect-[16/10] overflow-hidden rounded-sm bg-[#1E1C1A] border border-white/10 shadow-2xl">
@@ -258,19 +259,9 @@ export function HomePage() {
               </div>
             </div>
             <div className="lg:col-span-5 space-y-6">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-[#C6A15B]">
-                  EDITORIAL PERSPECTIVE
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setForceReplayIntro(true)}
-                  className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-[#A89D8F] hover:text-[#C6A15B] transition-colors cursor-pointer"
-                >
-                  <Play className="w-3 h-3 fill-current" />
-                  <span>REPLAY CINEMATIC INTRO</span>
-                </button>
-              </div>
+              <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-[#C6A15B]">
+                EDITORIAL PERSPECTIVE
+              </p>
 
               <h2 className="font-editorial text-3xl sm:text-4xl text-[#F7F3EB] leading-tight">
                 {homepageConfig.editorialTitle}
@@ -299,7 +290,7 @@ export function HomePage() {
                 </div>
                 <div>
                   <p className="font-editorial text-3xl text-[#C6A15B] tabular-nums">14d</p>
-                  <p className="text-[10px] uppercase tracking-wider text-[#A89D8F] mt-1">Privilege</p>
+                  <p className="text-[10px] uppercase tracking-wider text-[#A89D8F] mt-1">Returns</p>
                 </div>
               </div>
             </div>
@@ -307,8 +298,59 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 8. Lookbook / Visual Inspiration Gallery */}
-      <section className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20 lg:py-28">
+      {/* 8. Genuine Verified Customer Reviews */}
+      <section className="bg-[#FAF8F5] text-[#171717] py-20 lg:py-24 border-b border-[#E8E2D7]">
+        <div className="max-w-[1380px] mx-auto px-4 sm:px-8 lg:px-12">
+          <div className="text-center max-w-xl mx-auto mb-14">
+            <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-[#C6A15B] font-semibold">
+              VERIFIED PATRON REVIEWS
+            </p>
+            <h2 className="mt-2 font-editorial text-3xl sm:text-4xl text-[#171717]">
+              Words from Our Patrons
+            </h2>
+            <p className="mt-2 text-xs font-mono text-[#8C8375]">
+              Unfiltered impressions from verified acquisitions across India.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {approvedReviews.map((rev) => (
+              <div
+                key={rev.id}
+                className="bg-white p-6 sm:p-8 rounded-sm border border-[#E0D7C9] shadow-sm flex flex-col justify-between space-y-4"
+              >
+                <div>
+                  <div className="flex items-center gap-1 text-[#C6A15B] mb-3">
+                    {[...Array(rev.rating)].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                    ))}
+                  </div>
+                  <h3 className="font-editorial text-lg text-[#171717] font-semibold">
+                    "{rev.title}"
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-[#57524B] leading-relaxed font-light">
+                    {rev.comment}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-[#EBE4D8] flex items-center justify-between text-xs font-mono">
+                  <div>
+                    <p className="font-semibold text-[#171717]">{rev.authorName}</p>
+                    <p className="text-[10px] text-[#8C8375]">{rev.city}</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[10px] text-[#2E7D32]">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>Verified</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 9. Lookbook / Visual Inspiration Living Archive */}
+      <section className="max-w-[1380px] mx-auto px-4 sm:px-8 lg:px-12 py-20 lg:py-24">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 pb-4 border-b border-white/10">
           <div>
             <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-[#C6A15B]">
@@ -322,7 +364,7 @@ export function HomePage() {
             to="/shop"
             className="text-xs font-mono tracking-[0.16em] uppercase text-[#A89D8F] hover:text-[#C6A15B] transition-colors"
           >
-            Shop Featured Looks
+            <span>Shop Featured Looks</span>
           </Link>
         </div>
 
@@ -348,7 +390,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 9. Quiet Newsletter / Privilege Access Section */}
+      {/* 10. Quiet Newsletter / Privilege Access Section */}
       <section className="bg-[#121110] border-t border-white/10 py-20">
         <div className="max-w-2xl mx-auto px-4 sm:px-8 text-center space-y-4">
           <p className="text-[10px] font-mono uppercase tracking-[0.26em] text-[#C6A15B]">

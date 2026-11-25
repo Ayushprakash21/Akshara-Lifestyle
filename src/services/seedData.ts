@@ -36,6 +36,15 @@ export const ASSETS = {
   watchChronograph: '/src/assets/images/watches_chronograph_panda.jpg',
   watchWomenMesh: '/src/assets/images/watches_women_mesh_gold.jpg',
   watchFieldTitanium: '/src/assets/images/watches_field_titanium.jpg',
+  rainbowModel1: '/src/assets/images/campaign_rainbow/model_pose1_transparent.png',
+  rainbowModelOpen: '/src/assets/images/campaign_rainbow/model_pose4_transparent.png',
+  rainbowModelPoised: '/src/assets/images/campaign_rainbow/model_pose5_transparent.png',
+  rainbowBg: '/src/assets/images/campaign_rainbow/raw_page_1_img_1.png',
+  rainbowPage1: '/src/assets/images/campaign_rainbow/page_1.jpg',
+  rainbowPage2: '/src/assets/images/campaign_rainbow/page_2.jpg',
+  rainbowPage3: '/src/assets/images/campaign_rainbow/page_3.jpg',
+  rainbowPage4: '/src/assets/images/campaign_rainbow/page_4.jpg',
+  rainbowPage5: '/src/assets/images/campaign_rainbow/page_5.jpg',
 } as const;
 
 export const SEED_BRANDS: Brand[] = [
@@ -206,6 +215,55 @@ export const SEED_CATEGORIES: Category[] = [
 ];
 
 export const SEED_PRODUCTS: Product[] = [
+  // Flagship Fashion Campaign: Rainbow Elegance
+  {
+    id: 'prod-rainbow-elegance-anarkali',
+    slug: 'rainbow-elegance-handloom-organza-silk-ensemble',
+    sku: 'AKS-FAS-100',
+    name: 'Rainbow Elegance Handloom Organza Silk Ensemble',
+    brandId: 'brand-atelier',
+    brandName: 'AKSHARA Atelier',
+    categorySlug: 'fashion-clothing',
+    subcategory: 'Contemporary Ethnic',
+    shortDescription: 'Handloom organza silk ensemble in a graduated spectrum of yellow, pink, and cerulean blue with gossamer sheer dupatta.',
+    description:
+      'A celebration of radiant color, light layers, and graceful fluid movement. Masterfully tailored in sheer handloom organza silk featuring an artisanal graduated ombre spectrum of sunlit yellow, vibrant fuchsia pink, and cerulean blue with subtle gold threadwork. Paired with a gossamer sheer dupatta engineered to float with every step.',
+    price: 24800,
+    originalPrice: 29500,
+    gstRate: 12,
+    hsnCode: '620419',
+    images: [
+      ASSETS.rainbowPage1,
+      ASSETS.rainbowPage4,
+      ASSETS.rainbowPage2,
+      ASSETS.rainbowPage5,
+      ASSETS.rainbowPage3,
+    ],
+    badge: 'SIGNATURE CAMPAIGN',
+    isTrending: true,
+    isNewArrival: true,
+    isBestSeller: true,
+    codEligible: true,
+    variants: [
+      { id: 'v-re-xs', sku: 'AKS-FAS-100-RBW-XS', colorName: 'Rainbow Spectrum', colorHex: '#F6C344', size: 'XS', stock: 6 },
+      { id: 'v-re-s', sku: 'AKS-FAS-100-RBW-S', colorName: 'Rainbow Spectrum', colorHex: '#F6C344', size: 'S', stock: 10 },
+      { id: 'v-re-m', sku: 'AKS-FAS-100-RBW-M', colorName: 'Rainbow Spectrum', colorHex: '#F6C344', size: 'M', stock: 8 },
+      { id: 'v-re-l', sku: 'AKS-FAS-100-RBW-L', colorName: 'Rainbow Spectrum', colorHex: '#F6C344', size: 'L', stock: 4 },
+    ],
+    specifications: [
+      { label: 'Fabric', value: '100% Pure Handloom Organza Silk' },
+      { label: 'Palette', value: 'Graduated Sunlit Yellow, Fuchsia Pink & Cerulean Blue' },
+      { label: 'Set Includes', value: 'Flared Silk Kurta Gown + Gossamer Sheer Dupatta' },
+      { label: 'Details', value: 'Hand-rolled silk borders, delicate metallic zari contours' },
+      { label: 'Care', value: 'Specialist dry clean only' },
+      { label: 'Origin', value: 'Woven & tailored in Jaipur Atelier' },
+    ],
+    shippingNotes: 'Packed in bespoke archival keepsake presentation box. Insured Pan-India delivery included.',
+    returnPolicyDays: 14,
+    weightGrams: 520,
+    createdAt: '2026-11-20T09:00:00Z',
+    status: 'active',
+  },
   // 1. Fashion & Clothing (4 products)
   {
     id: 'prod-linen-blazer',
