@@ -160,16 +160,25 @@ export function ProductCatalogSection() {
         </div>
 
         {filteredProducts.length === 0 && (
-          <div className="py-20 text-center">
-            <p className="font-editorial text-2xl text-[#6B645A]">No objects found matching your criteria.</p>
+          <div className="py-20 text-center max-w-md mx-auto">
+            <p className="font-editorial text-2xl text-[#171717]">
+              {selectedCategory === 'watches'
+                ? 'No products currently available in Watches.'
+                : 'No objects found matching your criteria.'}
+            </p>
+            <p className="font-body text-xs text-[#8C8478] mt-2 tracking-wide">
+              {selectedCategory === 'watches'
+                ? 'Our horological collection is currently in studio development. New timepiece editions will be released shortly.'
+                : 'Please try searching for another object or resetting filters.'}
+            </p>
             <button
               onClick={() => {
                 setSelectedCategory('all');
                 setSearchQuery('');
               }}
-              className="mt-4 px-6 py-2 bg-[#171717] text-[#F7F4EE] rounded-full text-xs font-nav uppercase tracking-widest cursor-pointer"
+              className="mt-6 px-6 py-2.5 bg-[#171717] hover:bg-[#C5A46D] hover:text-[#0B0B0B] text-[#F7F4EE] rounded-full text-xs font-nav uppercase tracking-widest cursor-pointer transition-colors"
             >
-              Reset Filters
+              Browse All Available Objects
             </button>
           </div>
         )}

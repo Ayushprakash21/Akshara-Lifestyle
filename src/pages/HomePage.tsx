@@ -8,8 +8,8 @@ import { SafeImage } from '../components/SafeImage';
 
 // Cinematic Abstract & Motion Components
 import { CinematicPreloader } from '../components/motion/CinematicPreloader';
-import { CinematicBrandExperience } from '../components/motion/CinematicBrandExperience';
-import { CategoryRevealScene } from '../components/motion/CategoryRevealScene';
+import { HeroBrandIntroScene } from '../components/motion/HeroBrandIntroScene';
+import { CategoryTransitionScene } from '../components/motion/CategoryTransitionScene';
 import { CuratedCollectionsScene } from '../components/motion/CuratedCollectionsScene';
 import { ProductCatalogSection } from '../components/motion/ProductCatalogSection';
 
@@ -41,10 +41,10 @@ export function HomePage() {
   const stillLifeArchive = useMemo(
     () => [
       {
-        image: ASSETS.watchDressHero,
-        label: 'Kala Automatic 38mm',
-        category: 'Horology',
-        to: '/product/akshara-horlogerie-kala-38mm-automatic-dress-watch',
+        image: ASSETS.fashionBlazer,
+        label: 'Belgian Linen Blazer',
+        category: 'Fashion',
+        to: '/product/sand-double-breasted-linen-blazer',
       },
       {
         image: ASSETS.jewelleryPendant,
@@ -98,43 +98,43 @@ export function HomePage() {
       <CinematicPreloader />
 
       {/* =========================================================================
-          SECTIONS 1 & 2: BRAND INTRODUCTION & CINEMATIC STORYTELLING (GSAP Pinned Timeline)
-          - Full-screen animated introduction featuring AKSHARA LIFESTYLE
+          SECTION 1: BRAND INTRODUCTION (HERO)
+          - Full-screen cinematic introduction featuring AKSHARA LIFESTYLE
           - Minimal copy: EVERYDAY, ELEVATED.
+          - Subtitle: A multi-category lifestyle destination.
           - Animated brand logo emblem
-          - Word-by-word reveal with clipping masks
-          - Scroll-triggered animation timeline (dialedcoffee.com inspired)
-          - Pinned sections where appropriate (240vh scrubbed timeline)
-          - Background morphs smoothly from charcoal #141312 to warm ivory #FAF8F5
-          - Typography transitions to charcoal #171717
-          - Raking architectural sunlight and shadow beam sweep
+          - GSAP scroll-triggered spatial typography transform (moves outward with parallax)
           - ZERO products. ZERO people. ZERO prices. ZERO sales buttons.
+          - NO repetitive waves, NO floating transparent boxes.
           ========================================================================= */}
-      <CinematicBrandExperience />
+      <HeroBrandIntroScene />
 
       {/* =========================================================================
-          SECTION 3: CATEGORY REVEAL
-          - Introduce the actual 7 categories:
+          SECTION 2: BRAND STORY & CATEGORY TRANSITIONS
+          - Approved brand identity only:
+            AKSHARA LIFESTYLE / EVERYDAY, ELEVATED. / A multi-category lifestyle destination.
+          - 7 core categories:
             Fashion, Jewellery, Watches, Beauty, Home Décor, Electronics, Bags
-          - Animated typography and carefully art-directed visual transitions
-          - Zero fabricated products, pure procedural material geometry & philosophy
+          - Intentional animated transitions with authentic still life
+          - Zero invented manifestos, zero fabricated claims
           ========================================================================= */}
-      <CategoryRevealScene />
+      <CategoryTransitionScene />
 
       {/* =========================================================================
-          SECTION 4: CURATED COLLECTIONS
+          SECTION 3: CURATED COLLECTIONS
           - Products ONLY enter the experience here
-          - Real products from existing Firestore catalogue (useCommerce)
+          - Real verified products from existing Firestore catalogue (useCommerce)
           - Verified prices, verified images, verified variants
           - Direct variant selection and Add to Bag with drawer integration
-          - Zero fabricated claims
+          - Zero fabricated watches or claims
           ========================================================================= */}
       <CuratedCollectionsScene />
 
       {/* =========================================================================
-          SECTION 5: SHOPPING EXPERIENCE
+          SECTION 4: SHOPPING EXPERIENCE
           - Functional product catalogue
-          - Product cards, search, filtering by category, sorting
+          - Product cards, search, filtering across all 7 categories, sorting
+          - Clean empty state for categories without products (e.g. Watches)
           - Wishlist, Add to Cart, direct checkout pathways
           ========================================================================= */}
       <ProductCatalogSection />

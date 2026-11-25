@@ -18,15 +18,33 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
+  const isHome = location.pathname === '/';
+  const [isScrolled, setIsScrolled] = useState(!isHome);
+
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!isHome) {
+      setIsScrolled(true);
+      return;
+    }
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 80);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isHome]);
+
+  const isDarkNav = isHome && !isScrolled;
 
   return (
     <>
       {/* Slim dismissible announcement bar (<= 36px) */}
       {showAnnouncement && (
-        <div className="bg-[#171717] text-[#F7F4EE] text-[11px] tracking-[0.06em] px-4 py-2 relative">
+        <div className="bg-[#171717] text-[#F7F4EE] text-[11px] tracking-[0.06em] px-4 py-2 relative z-50">
           <div className="max-w-[1380px] mx-auto flex items-center justify-center gap-3 pr-7">
             <p className="truncate text-center">{homepageConfig.announcementText}</p>
           </div>
@@ -41,8 +59,14 @@ export function Header() {
         </div>
       )}
 
-      {/* Sticky Luxury Navigation Header — clean single-row 3-zone contract */}
-      <header className="sticky top-0 z-40 bg-[#F7F4EE]/95 backdrop-blur-sm border-b border-[#E9E1D5]">
+      {/* Sticky Luxury Navigation Header — smooth scroll-aware transition */}
+      <header
+        className={`sticky top-0 z-40 transition-all duration-300 ${
+          isDarkNav
+            ? 'bg-[#0C0B0A]/95 backdrop-blur-md border-b border-white/10 text-[#F7F4EE]'
+            : 'bg-[#F7F4EE]/95 backdrop-blur-sm border-b border-[#E9E1D5] text-[#171717]'
+        }`}
+      >
         <div className="max-w-[1380px] mx-auto px-3 sm:px-6 lg:px-10 h-16 lg:h-[72px] flex items-center justify-between gap-2 sm:gap-6">
           {/* Left: Mobile Menu + Brand Wordmark */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -50,7 +74,9 @@ export function Header() {
               type="button"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open navigation menu"
-              className="lg:hidden p-1.5 -ml-1 text-[#171717] hover:text-[#C5A46D] transition-colors"
+              className={`lg:hidden p-1.5 -ml-1 transition-colors ${
+                isDarkNav ? 'text-[#F7F4EE] hover:text-[#C5A46D]' : 'text-[#171717] hover:text-[#C5A46D]'
+              }`}
             >
               <Menu className="w-5 h-5" strokeWidth={1.5} />
             </button>
@@ -58,24 +84,30 @@ export function Header() {
               to="/"
               className="inline-flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C5A46D]"
             >
-              <BrandLogo variant="dark" layout="horizontal" mobileResponsive />
+              <BrandLogo variant={isDarkNav ? 'light' : 'dark'} layout="horizontal" mobileResponsive />
             </Link>
           </div>
 
           {/* Center: Clean single-line Category Navigation */}
           <nav
             aria-label="Primary categories"
-            className="hidden lg:flex items-center gap-7 text-[13px] tracking-[0.04em] text-[#171717]"
+            className={`hidden lg:flex items-center gap-7 text-[13px] tracking-[0.04em] ${
+              isDarkNav ? 'text-[#D5CFC7]' : 'text-[#171717]'
+            }`}
           >
             {categories.map((cat) => (
               <NavLink
                 key={cat.id}
                 to={`/category/${cat.slug}`}
                 className={({ isActive }) =>
-                  `relative py-1 whitespace-nowrap shrink-0 transition-colors hover:text-[#9A7A45] ${
-                    isActive
-                      ? 'text-[#171717] font-medium after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[1.5px] after:bg-[#C5A46D]'
-                      : 'text-[#44423F]'
+                  `relative py-1 whitespace-nowrap shrink-0 transition-colors ${
+                    isDarkNav
+                      ? isActive
+                        ? 'text-white font-medium after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[1.5px] after:bg-[#C5A46D]'
+                        : 'text-[#D5CFC7] hover:text-[#C5A46D]'
+                      : isActive
+                        ? 'text-[#171717] font-medium after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[1.5px] after:bg-[#C5A46D]'
+                        : 'text-[#44423F] hover:text-[#9A7A45]'
                   }`
                 }
               >
@@ -90,7 +122,11 @@ export function Header() {
               type="button"
               onClick={openSearch}
               aria-label="Search catalog"
-              className="inline-flex items-center gap-2 p-2 sm:px-2.5 text-xs text-[#171717] hover:text-[#9A7A45] transition-colors whitespace-nowrap"
+              className={`inline-flex items-center gap-2 p-2 sm:px-2.5 text-xs transition-colors whitespace-nowrap ${
+                isDarkNav
+                  ? 'text-[#F7F4EE] hover:text-[#C5A46D]'
+                  : 'text-[#171717] hover:text-[#9A7A45]'
+              }`}
             >
               <Search className="w-[18px] h-[18px]" strokeWidth={1.5} />
               <span className="hidden xl:inline tracking-[0.04em]">Search</span>
@@ -99,7 +135,11 @@ export function Header() {
             <Link
               to="/wishlist"
               aria-label={`Wishlist (${wishlist.length} items)`}
-              className="hidden sm:inline-flex relative p-2 text-[#171717] hover:text-[#9A7A45] transition-colors"
+              className={`hidden sm:inline-flex relative p-2 transition-colors ${
+                isDarkNav
+                  ? 'text-[#F7F4EE] hover:text-[#C5A46D]'
+                  : 'text-[#171717] hover:text-[#9A7A45]'
+              }`}
             >
               <Heart className="w-[18px] h-[18px]" strokeWidth={1.5} />
               {wishlist.length > 0 && (
@@ -112,11 +152,15 @@ export function Header() {
             <Link
               to={currentUser ? '/account' : '/login'}
               aria-label={currentUser ? `Account (${currentUser.name})` : 'Sign in'}
-              className="p-2 text-[#171717] hover:text-[#9A7A45] transition-colors inline-flex items-center gap-1.5"
+              className={`p-2 transition-colors inline-flex items-center gap-1.5 ${
+                isDarkNav
+                  ? 'text-[#F7F4EE] hover:text-[#C5A46D]'
+                  : 'text-[#171717] hover:text-[#9A7A45]'
+              }`}
             >
               <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
               {currentUser && (
-                <span className="hidden xl:inline text-xs font-medium text-[#171717] max-w-[90px] truncate">
+                <span className={`hidden xl:inline text-xs font-medium max-w-[90px] truncate ${isDarkNav ? 'text-white' : 'text-[#171717]'}`}>
                   {currentUser.name.split(' ')[0]}
                 </span>
               )}
@@ -126,7 +170,11 @@ export function Header() {
               type="button"
               onClick={openCartDrawer}
               aria-label={`Shopping bag (${cartTotals.itemCount} items)`}
-              className="relative inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:pl-2.5 sm:pr-3 py-2 bg-[#171717] hover:bg-[#0B0B0B] text-[#F7F4EE] text-xs tracking-[0.08em] uppercase transition-colors whitespace-nowrap shrink-0"
+              className={`relative inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:pl-2.5 sm:pr-3 py-2 text-xs tracking-[0.08em] uppercase transition-colors whitespace-nowrap shrink-0 ${
+                isDarkNav
+                  ? 'bg-white/10 hover:bg-[#C5A46D] text-white hover:text-[#0B0B0B] border border-white/20'
+                  : 'bg-[#171717] hover:bg-[#0B0B0B] text-[#F7F4EE]'
+              }`}
             >
               <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
               <span className="hidden sm:inline">Bag</span>

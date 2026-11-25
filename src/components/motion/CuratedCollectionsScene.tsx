@@ -15,7 +15,7 @@ export function CuratedCollectionsScene() {
     if (!products || products.length === 0) return [];
 
     const targetIds = [
-      'prod-watch-kala-auto',
+      'prod-linen-blazer',
       'prod-lotus-pendant',
       'prod-travertine-lamp',
       'prod-merino-knit',
@@ -51,8 +51,8 @@ export function CuratedCollectionsScene() {
   // Map product ID to studio cutout if available
   const getProductCutout = (productId: string, fallbackImage: string) => {
     switch (productId) {
-      case 'prod-watch-kala-auto':
-        return ASSETS.cutoutWatchDress || fallbackImage;
+      case 'prod-linen-blazer':
+        return fallbackImage;
       case 'prod-lotus-pendant':
         return ASSETS.cutoutLotusPendant || fallbackImage;
       case 'prod-travertine-lamp':

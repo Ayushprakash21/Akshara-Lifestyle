@@ -172,10 +172,15 @@ const CommerceContext = createContext<CommerceContextValue | null>(null);
 
 export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(() => {
+    const validSeedIds = new Set(SEED_PRODUCTS.map((p) => p.id));
     const stored = readStorage<Product[]>('products', SEED_PRODUCTS);
-    const existingIds = new Set(stored.map((p) => p.id));
+    // Purge any removed/fabricated products from local storage cache
+    const validStored = stored.filter((p) => validSeedIds.has(p.id));
+    const existingIds = new Set(validStored.map((p) => p.id));
     const missing = SEED_PRODUCTS.filter((p) => !existingIds.has(p.id));
-    return missing.length > 0 ? [...stored, ...missing] : stored;
+    const finalProducts = missing.length > 0 ? [...validStored, ...missing] : validStored;
+    writeStorage('products', finalProducts);
+    return finalProducts;
   });
   const [categories, setCategories] = useState<Category[]>(() => {
     const stored = readStorage<Category[]>('categories', SEED_CATEGORIES);
@@ -209,7 +214,15 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(() =>
     readStorage<string | null>('currentUserId', null),
   );
-  const [cart, setCart] = useState<CartItem[]>(() => readStorage('cart', []));
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    const rawCart = readStorage<CartItem[]>('cart', []);
+    const validSeedIds = new Set(SEED_PRODUCTS.map((p) => p.id));
+    const cleanedCart = rawCart.filter((item) => validSeedIds.has(item.productId));
+    if (cleanedCart.length !== rawCart.length) {
+      writeStorage('cart', cleanedCart);
+    }
+    return cleanedCart;
+  });
   const [wishlist, setWishlist] = useState<string[]>(() => readStorage('wishlist', []));
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>(() =>
     readStorage('recentlyViewed', []),
