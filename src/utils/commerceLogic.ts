@@ -4,6 +4,7 @@ import type {
   DeliveryMethodId,
   FilterState,
   Order,
+  OrderStatus,
   PaymentMethodId,
   PincodeServiceability,
   Product,
@@ -58,6 +59,120 @@ export function getProductRatingStats(
   };
 }
 
+export interface RatingDistributionRow {
+  stars: 5 | 4 | 3 | 2 | 1;
+  count: number;
+  percentage: number;
+}
+
+/**
+ * Computes 5-to-1 star breakdown counts and percentages from approved reviews for a product.
+ */
+export function getRatingDistribution(
+  productId: string,
+  reviews: Review[],
+): RatingDistributionRow[] {
+  const approved = reviews.filter(
+    (r) => r.productId === productId && r.status === 'approved',
+  );
+  const total = approved.length;
+  const buckets: (5 | 4 | 3 | 2 | 1)[] = [5, 4, 3, 2, 1];
+  return buckets.map((stars) => {
+    const count = approved.filter((r) => Math.round(r.rating) === stars).length;
+    const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+    return { stars, count, percentage };
+  });
+}
+
+export type ReviewSortOption = 'newest' | 'highest' | 'lowest';
+
+/**
+ * Filters reviews by optional star rating and sorts them deterministically.
+ */
+export function filterAndSortReviews(
+  reviews: Review[],
+  options: { starFilter: number | null; sortBy: ReviewSortOption },
+): Review[] {
+  const filtered =
+    options.starFilter === null
+      ? [...reviews]
+      : reviews.filter((r) => Math.round(r.rating) === options.starFilter);
+
+  filtered.sort((a, b) => {
+    if (options.sortBy === 'highest') {
+      return b.rating - a.rating || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    if (options.sortBy === 'lowest') {
+      return a.rating - b.rating || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return filtered;
+}
+
+export interface ReviewValidationResult {
+  valid: boolean;
+  field?: 'auth' | 'rating' | 'title' | 'comment';
+  error?: string;
+}
+
+/**
+ * Validates a product review submission ensuring authentication, 1-5 star bounds, and meaningful text.
+ */
+export function validateProductReview(payload: {
+  isAuthenticated: boolean;
+  rating: number;
+  title: string;
+  comment: string;
+}): ReviewValidationResult {
+  if (!payload.isAuthenticated) {
+    return {
+      valid: false,
+      field: 'auth',
+      error: 'Please sign in to submit a product review.',
+    };
+  }
+  if (!Number.isInteger(payload.rating) || payload.rating < 1 || payload.rating > 5) {
+    return {
+      valid: false,
+      field: 'rating',
+      error: 'Please select a star rating between 1 and 5.',
+    };
+  }
+  const cleanTitle = payload.title.trim();
+  if (cleanTitle.length < 3) {
+    return {
+      valid: false,
+      field: 'title',
+      error: 'Please add a short headline (at least 3 characters).',
+    };
+  }
+  if (cleanTitle.length > 120) {
+    return {
+      valid: false,
+      field: 'title',
+      error: 'Headline must be 120 characters or fewer.',
+    };
+  }
+  const cleanComment = payload.comment.trim();
+  if (cleanComment.length < 10) {
+    return {
+      valid: false,
+      field: 'comment',
+      error: 'Please share at least 10 characters in your review.',
+    };
+  }
+  if (cleanComment.length > 1000) {
+    return {
+      valid: false,
+      field: 'comment',
+      error: 'Review text must be 1,000 characters or fewer.',
+    };
+  }
+  return { valid: true };
+}
+
 /**
  * Validates a 10-digit Indian mobile number (starts with 6-9).
  */
@@ -85,6 +200,191 @@ export function isValidGSTIN(gstin: string): boolean {
 
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+export interface NewsletterValidationResult {
+  status: 'valid' | 'invalid' | 'duplicate';
+  normalizedEmail: string;
+  message?: string;
+}
+
+/**
+ * Validates and normalizes an email for newsletter subscription, detecting duplicates case-insensitively.
+ */
+export function validateNewsletterSubscription(
+  rawEmail: string,
+  existingSubscribers: string[],
+): NewsletterValidationResult {
+  const normalizedEmail = rawEmail.trim().toLowerCase();
+  if (!normalizedEmail) {
+    return {
+      status: 'invalid',
+      normalizedEmail,
+      message: 'Please enter your email address.',
+    };
+  }
+  if (!isValidEmail(normalizedEmail)) {
+    return {
+      status: 'invalid',
+      normalizedEmail,
+      message: 'Please enter a valid email address (e.g. name@domain.com).',
+    };
+  }
+  const alreadySubscribed = existingSubscribers.some(
+    (entry) => entry.trim().toLowerCase() === normalizedEmail,
+  );
+  if (alreadySubscribed) {
+    return {
+      status: 'duplicate',
+      normalizedEmail,
+      message: `${normalizedEmail} is already subscribed to promotional updates.`,
+    };
+  }
+  return {
+    status: 'valid',
+    normalizedEmail,
+  };
+}
+
+export interface GuestOrderLookupResult {
+  ok: boolean;
+  order?: Order;
+  field?: 'orderId' | 'email' | 'lookup';
+  error?: string;
+}
+
+/**
+ * Looks up a customer order using Order ID (orderNumber or internal id, with optional leading #)
+ * and matching email address (case-insensitive). Returns a privacy-safe message on mismatch.
+ */
+export function lookupGuestOrder(
+  orders: Order[],
+  rawOrderId: string,
+  rawEmail: string,
+): GuestOrderLookupResult {
+  const cleanedOrderId = rawOrderId.trim().replace(/^#+/, '').toUpperCase();
+  const cleanedEmail = rawEmail.trim().toLowerCase();
+
+  if (!cleanedOrderId) {
+    return {
+      ok: false,
+      field: 'orderId',
+      error: 'Please enter your Order ID (e.g. AKS-2611-1002).',
+    };
+  }
+  if (!cleanedEmail) {
+    return {
+      ok: false,
+      field: 'email',
+      error: 'Please enter the email address used at checkout.',
+    };
+  }
+  if (!isValidEmail(cleanedEmail)) {
+    return {
+      ok: false,
+      field: 'email',
+      error: 'Please enter a valid email address (e.g. name@domain.com).',
+    };
+  }
+
+  const matched = orders.find((order) => {
+    const idMatches =
+      order.orderNumber.trim().toUpperCase() === cleanedOrderId ||
+      order.id.trim().toUpperCase() === cleanedOrderId;
+    const emailMatches = order.customerEmail.trim().toLowerCase() === cleanedEmail;
+    return idMatches && emailMatches;
+  });
+
+  if (!matched) {
+    return {
+      ok: false,
+      field: 'lookup',
+      error:
+        'No order found matching that Order ID and email address. Please verify the details from your confirmation email.',
+    };
+  }
+
+  return {
+    ok: true,
+    order: matched,
+  };
+}
+
+export interface OrderProgressStage {
+  key: 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered';
+  label: string;
+}
+
+export const ORDER_FULFILLMENT_STAGES: OrderProgressStage[] = [
+  { key: 'confirmed', label: 'Confirmed' },
+  { key: 'packed', label: 'Packed' },
+  { key: 'shipped', label: 'Shipped' },
+  { key: 'out_for_delivery', label: 'Out for Delivery' },
+  { key: 'delivered', label: 'Delivered' },
+];
+
+export interface OrderProgressInfo {
+  label: string;
+  summary: string;
+  activeStageIndex: number; // 0..4 for normal progression, -1 for cancelled
+  isException: boolean;
+}
+
+/**
+ * Maps an OrderStatus into structured display metadata and progress step index.
+ */
+export function getOrderProgressInfo(status: OrderStatus): OrderProgressInfo {
+  switch (status) {
+    case 'confirmed':
+      return {
+        label: 'Order Confirmed',
+        summary: 'Your order has been received and is queued for atelier inspection and packing.',
+        activeStageIndex: 0,
+        isException: false,
+      };
+    case 'packed':
+      return {
+        label: 'Packed & Quality Checked',
+        summary: 'Sealed in archival packaging and awaiting courier pickup from our dispatch hub.',
+        activeStageIndex: 1,
+        isException: false,
+      };
+    case 'shipped':
+      return {
+        label: 'In Transit',
+        summary: 'Your parcel has departed our dispatch hub and is moving through the courier network.',
+        activeStageIndex: 2,
+        isException: false,
+      };
+    case 'out_for_delivery':
+      return {
+        label: 'Out for Delivery',
+        summary: 'Your shipment is with the local courier partner and scheduled for delivery today.',
+        activeStageIndex: 3,
+        isException: false,
+      };
+    case 'delivered':
+      return {
+        label: 'Delivered',
+        summary: 'This shipment has been delivered to the recipient address.',
+        activeStageIndex: 4,
+        isException: false,
+      };
+    case 'return_requested':
+      return {
+        label: 'Return Requested',
+        summary: 'A return or exchange request has been registered for this delivered order.',
+        activeStageIndex: 4,
+        isException: true,
+      };
+    case 'cancelled':
+      return {
+        label: 'Order Cancelled',
+        summary: 'This order has been cancelled and will not be dispatched.',
+        activeStageIndex: -1,
+        isException: true,
+      };
+  }
 }
 
 const PINCODE_REGION_MAP: Record<

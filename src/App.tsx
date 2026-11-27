@@ -10,6 +10,7 @@ import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ForgotPasswordPage, LoginPage, RegisterPage } from './pages/AuthPages';
 import { AccountPage } from './pages/AccountPage';
+import { OrderTrackingPage } from './pages/OrderTrackingPage';
 import { NotFoundPage, WishlistPage } from './pages/WishlistAndNotFoundPages';
 import { AdminPage } from './pages/AdminPage';
 
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/account" element={<AccountPage />} />
+              <Route path="/track-order" element={<OrderTrackingPage />} />
             </Route>
 
             {/* Dedicated Luxury Editorial 404 Experience */}

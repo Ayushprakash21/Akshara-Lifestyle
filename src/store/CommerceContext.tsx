@@ -33,7 +33,11 @@ import {
   SEED_USERS,
 } from '../services/seedData';
 import { readStorage, writeStorage } from '../services/storage';
-import { calculateCartTotals, type CartTotals } from '../utils/commerceLogic';
+import {
+  calculateCartTotals,
+  validateProductReview,
+  type CartTotals,
+} from '../utils/commerceLogic';
 import { shippingProviderAdapter } from '../services/integrations';
 import {
   isFirebaseConfigured,
@@ -139,12 +143,12 @@ interface CommerceContextValue {
   placeDemoOrder: (payload: PlaceOrderPayload) => Promise<Order>;
   submitReview: (payload: {
     productId: string;
-    authorName: string;
-    city: string;
+    authorName?: string;
+    city?: string;
     rating: number;
     title: string;
     comment: string;
-  }) => void;
+  }) => { ok: boolean; error?: string; updated?: boolean };
   createReturnRequest: (payload: {
     orderId: string;
     reason: string;
@@ -808,36 +812,81 @@ export function CommerceProvider({ children }: { children: React.ReactNode }) {
   const submitReview = useCallback(
     (payload: {
       productId: string;
-      authorName: string;
-      city: string;
+      authorName?: string;
+      city?: string;
       rating: number;
       title: string;
       comment: string;
-    }) => {
+    }): { ok: boolean; error?: string; updated?: boolean } => {
+      const validation = validateProductReview({
+        isAuthenticated: Boolean(currentUser),
+        rating: payload.rating,
+        title: payload.title,
+        comment: payload.comment,
+      });
+
+      if (!validation.valid || !currentUser) {
+        return {
+          ok: false,
+          error: validation.error ?? 'Please sign in to submit a review.',
+        };
+      }
+
+      const verifiedPurchase = orders.some(
+        (o) =>
+          (o.userId === currentUser.id ||
+            o.customerEmail.toLowerCase() === currentUser.email.toLowerCase()) &&
+          o.status !== 'cancelled' &&
+          o.items.some((i) => i.productId === payload.productId),
+      );
+
+      const authorName = (payload.authorName ?? currentUser.name).trim() || currentUser.name;
+      const city =
+        (payload.city ?? currentUser.addresses[0]?.city ?? '').trim() || 'India';
+      const existingReview = reviews.find(
+        (r) => r.productId === payload.productId && r.userId === currentUser.id,
+      );
+
+      if (existingReview) {
+        setReviews((prev) =>
+          prev.map((r) =>
+            r.id === existingReview.id
+              ? {
+                  ...r,
+                  authorName,
+                  city,
+                  rating: payload.rating,
+                  title: payload.title.trim(),
+                  comment: payload.comment.trim(),
+                  verifiedPurchase: r.verifiedPurchase || verifiedPurchase,
+                  status: 'approved',
+                  createdAt: new Date().toISOString(),
+                }
+              : r,
+          ),
+        );
+        pushToast('Review updated', 'Your updated rating and perspective are now live.', 'success');
+        return { ok: true, updated: true };
+      }
+
       const review: Review = {
         id: `rev-${Date.now()}`,
         productId: payload.productId,
-        userId: currentUserId ?? 'guest',
-        authorName: payload.authorName.trim(),
-        city: payload.city.trim() || 'India',
+        userId: currentUser.id,
+        authorName,
+        city,
         rating: payload.rating,
         title: payload.title.trim(),
         comment: payload.comment.trim(),
-        verifiedPurchase: Boolean(
-          currentUserId &&
-            orders.some(
-              (o) =>
-                o.userId === currentUserId &&
-                o.items.some((i) => i.productId === payload.productId),
-            ),
-        ),
+        verifiedPurchase,
         status: 'approved',
         createdAt: new Date().toISOString(),
       };
       setReviews((prev) => [review, ...prev]);
       pushToast('Review published', 'Thank you for sharing your perspective.', 'success');
+      return { ok: true, updated: false };
     },
-    [currentUserId, orders, pushToast],
+    [currentUser, orders, reviews, pushToast],
   );
 
   const createReturnRequest = useCallback(

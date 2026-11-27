@@ -262,6 +262,12 @@ export function Header() {
                 >
                   Saved Wishlist ({wishlist.length})
                 </Link>
+                <Link
+                  to="/track-order"
+                  className="block w-full py-3 px-4 text-center border border-[#D9D0C2] text-[#171717] text-xs tracking-[0.14em] uppercase"
+                >
+                  Track Guest Order
+                </Link>
               </div>
             </div>
           </div>

@@ -24,6 +24,7 @@ import {
 } from '../utils/commerceLogic';
 import type { PincodeServiceability } from '../types/commerce';
 import { ProductCard } from '../components/ProductCard';
+import { ProductReviewsSection } from '../components/ProductReviewsSection';
 import { SafeImage } from '../components/SafeImage';
 
 export function ProductDetailPage() {
@@ -35,11 +36,9 @@ export function ProductDetailPage() {
     reviews,
     wishlist,
     recentlyViewed,
-    currentUser,
     addToCart,
     toggleWishlist,
     recordRecentlyViewed,
-    submitReview,
   } = useCommerce();
 
   const product = useMemo(() => products.find((p) => p.slug === slug), [products, slug]);
@@ -55,14 +54,6 @@ export function ProductDetailPage() {
   const [pincode, setPincode] = useState('');
   const [pincodeResult, setPincodeResult] = useState<PincodeServiceability | null>(null);
   const [openAccordion, setOpenAccordion] = useState<'specs' | 'shipping' | null>('specs');
-
-  // Review form state
-  const [reviewName, setReviewName] = useState(currentUser?.name ?? '');
-  const [reviewCity, setReviewCity] = useState(currentUser?.addresses[0]?.city ?? '');
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewTitle, setReviewTitle] = useState('');
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewError, setReviewError] = useState('');
 
   useEffect(() => {
     if (product) {
@@ -80,14 +71,6 @@ export function ProductDetailPage() {
     if (!product) return undefined;
     return product.variants.find((v) => v.id === selectedVariantId) ?? product.variants[0];
   }, [product, selectedVariantId]);
-
-  const productReviews = useMemo(
-    () =>
-      product
-        ? reviews.filter((r) => r.productId === product.id && r.status === 'approved')
-        : [],
-    [reviews, product],
-  );
 
   const ratingStats = useMemo(
     () => (product ? getProductRatingStats(product.id, reviews) : { average: 0, count: 0 }),
@@ -168,25 +151,6 @@ export function ProductDetailPage() {
     navigate('/checkout');
   };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reviewName.trim() || !reviewTitle.trim() || reviewComment.trim().length < 10) {
-      setReviewError('Please provide your name, a headline, and at least 10 characters of feedback.');
-      return;
-    }
-    submitReview({
-      productId: product.id,
-      authorName: reviewName,
-      city: reviewCity,
-      rating: reviewRating,
-      title: reviewTitle,
-      comment: reviewComment,
-    });
-    setReviewTitle('');
-    setReviewComment('');
-    setReviewError('');
-  };
-
   return (
     <div className="pb-20 lg:pb-16">
       {/* Breadcrumb */}
@@ -261,7 +225,7 @@ export function ProductDetailPage() {
               {product.name}
             </h1>
 
-            {ratingStats.count > 0 && (
+            {ratingStats.count > 0 ? (
               <a
                 href="#customer-reviews"
                 className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-[#171717] hover:text-[#9A7A45]"
@@ -271,6 +235,14 @@ export function ProductDetailPage() {
                 <span className="text-[#85817B]">
                   ({ratingStats.count} {ratingStats.count === 1 ? 'review' : 'reviews'})
                 </span>
+              </a>
+            ) : (
+              <a
+                href="#customer-reviews"
+                className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-[#85817B] hover:text-[#171717] transition-colors"
+              >
+                <Star className="w-3.5 h-3.5 text-[#C5A46D]" strokeWidth={1.5} />
+                <span className="underline underline-offset-4">Be the first to review</span>
               </a>
             )}
 
@@ -539,180 +511,8 @@ export function ProductDetailPage() {
         </div>
       </section>
 
-      {/* Customer Reviews Section */}
-      <section
-        id="customer-reviews"
-        className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-10 mt-20 pt-14 border-t border-[#E9E1D5]"
-      >
-        <div className="grid lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-5 space-y-5">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[#85817B]">
-              Client Perspectives
-            </p>
-            <h2 className="font-editorial text-3xl text-[#171717]">Customer Reviews</h2>
-            {ratingStats.count > 0 ? (
-              <div className="flex items-center gap-3">
-                <span className="font-editorial text-4xl text-[#171717] tabular-nums">
-                  {ratingStats.average.toFixed(1)}
-                </span>
-                <div>
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-4 h-4 ${
-                          star <= Math.round(ratingStats.average)
-                            ? 'fill-[#C5A46D] text-[#C5A46D]'
-                            : 'text-[#D9D0C2]'
-                        }`}
-                        strokeWidth={1.5}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-[#85817B] mt-0.5">
-                    Based on {ratingStats.count} published {ratingStats.count === 1 ? 'review' : 'reviews'}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-[#85817B]">
-                No reviews yet for this piece. Share your experience below once you have tried it.
-              </p>
-            )}
-
-            {/* Write a review form */}
-            <form
-              onSubmit={handleReviewSubmit}
-              className="bg-white border border-[#E9E1D5] p-6 space-y-4"
-            >
-              <h3 className="text-xs uppercase tracking-[0.16em] font-semibold text-[#171717]">
-                Write a Review
-              </h3>
-              <div>
-                <span className="block text-xs text-[#85817B] mb-1.5">Rating</span>
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setReviewRating(n)}
-                      aria-label={`Rate ${n} out of 5`}
-                      className="p-1"
-                    >
-                      <Star
-                        className={`w-5 h-5 ${
-                          n <= reviewRating ? 'fill-[#C5A46D] text-[#C5A46D]' : 'text-[#D9D0C2]'
-                        }`}
-                        strokeWidth={1.5}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="rev-name" className="block text-xs text-[#85817B] mb-1">
-                    Name
-                  </label>
-                  <input
-                    id="rev-name"
-                    type="text"
-                    value={reviewName}
-                    onChange={(e) => setReviewName(e.target.value)}
-                    placeholder="Your name"
-                    className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3 py-2 text-sm text-[#171717]"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="rev-city" className="block text-xs text-[#85817B] mb-1">
-                    City
-                  </label>
-                  <input
-                    id="rev-city"
-                    type="text"
-                    value={reviewCity}
-                    onChange={(e) => setReviewCity(e.target.value)}
-                    placeholder="e.g. Mumbai"
-                    className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3 py-2 text-sm text-[#171717]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="rev-title" className="block text-xs text-[#85817B] mb-1">
-                  Headline
-                </label>
-                <input
-                  id="rev-title"
-                  type="text"
-                  value={reviewTitle}
-                  onChange={(e) => setReviewTitle(e.target.value)}
-                  placeholder="Summary of your impression"
-                  className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3 py-2 text-sm text-[#171717]"
-                />
-              </div>
-              <div>
-                <label htmlFor="rev-body" className="block text-xs text-[#85817B] mb-1">
-                  Perspective
-                </label>
-                <textarea
-                  id="rev-body"
-                  rows={3}
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="Share notes on fit, finish, materials, or longevity"
-                  className="w-full bg-[#F7F4EE] border border-[#D9D0C2] px-3 py-2 text-sm text-[#171717]"
-                />
-              </div>
-              {reviewError && <p className="text-xs text-[#9E2A2B]">{reviewError}</p>}
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-[#171717] hover:bg-[#0B0B0B] text-white text-xs tracking-[0.14em] uppercase"
-              >
-                Publish Review
-              </button>
-            </form>
-          </div>
-
-          <div className="lg:col-span-7 space-y-5">
-            {productReviews.length === 0 ? (
-              <div className="bg-white border border-[#E9E1D5] p-8 text-sm text-[#85817B]">
-                Reviews are published exclusively from real client submissions—we do not display fabricated ratings.
-              </div>
-            ) : (
-              productReviews.map((rev) => (
-                <article key={rev.id} className="bg-white border border-[#E9E1D5] p-6">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <Star
-                          key={n}
-                          className={`w-3.5 h-3.5 ${
-                            n <= rev.rating ? 'fill-[#C5A46D] text-[#C5A46D]' : 'text-[#D9D0C2]'
-                          }`}
-                          strokeWidth={1.5}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-[#85817B]">
-                      {new Date(rev.createdAt).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                  <h3 className="mt-2.5 text-base font-medium text-[#171717]">{rev.title}</h3>
-                  <p className="mt-1.5 text-sm text-[#55524E] leading-relaxed">{rev.comment}</p>
-                  <p className="mt-3 text-xs text-[#85817B]">
-                    {rev.authorName} · {rev.city}
-                    {rev.verifiedPurchase ? ' · Verified Client' : ''}
-                  </p>
-                </article>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
+      {/* Customer Reviews & Ratings Section */}
+      <ProductReviewsSection product={product} />
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (

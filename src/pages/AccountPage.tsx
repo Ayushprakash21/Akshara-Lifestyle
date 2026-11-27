@@ -103,6 +103,15 @@ export function AccountPage() {
             Register
           </Link>
         </div>
+        <p className="pt-3 text-xs text-[#85817B]">
+          Checked out as a guest?{' '}
+          <Link
+            to="/track-order"
+            className="text-[#171717] hover:text-[#9A7A45] underline underline-offset-4 transition-colors"
+          >
+            Track your order with Order ID &amp; email
+          </Link>
+        </p>
       </div>
     );
   }

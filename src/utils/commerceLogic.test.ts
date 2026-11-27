@@ -6,13 +6,19 @@ import {
   computeAdminMetrics,
   evaluateCoupon,
   filterAndSortProducts,
+  filterAndSortReviews,
   formatINR,
   getDiscountPercent,
+  getOrderProgressInfo,
+  getRatingDistribution,
   isValidGSTIN,
   isValidIndianPhone,
   isValidIndianPincode,
   levenshteinDistance,
+  lookupGuestOrder,
   scoreProductMatch,
+  validateNewsletterSubscription,
+  validateProductReview,
 } from './commerceLogic';
 import type { Coupon, Order, Product, Review, ShippingConfig } from '../types/commerce';
 
@@ -410,3 +416,214 @@ test('filterAndSortProducts filters watches by category, movement, case metallur
   assert.equal(mensResult.length, 1);
   assert.equal(mensResult[0].id, 'p3');
 });
+
+test('validateNewsletterSubscription validates format, normalizes case, and detects duplicates', () => {
+  const empty = validateNewsletterSubscription('   ', []);
+  assert.equal(empty.status, 'invalid');
+  assert.ok(empty.message?.includes('enter your email'));
+
+  const malformed = validateNewsletterSubscription('not-an-email', []);
+  assert.equal(malformed.status, 'invalid');
+  assert.ok(malformed.message?.includes('valid email'));
+
+  const fresh = validateNewsletterSubscription('  Meera.Kapoor@Example.COM ', [
+    'other@example.com',
+  ]);
+  assert.equal(fresh.status, 'valid');
+  assert.equal(fresh.normalizedEmail, 'meera.kapoor@example.com');
+
+  const duplicate = validateNewsletterSubscription('MEERA.KAPOOR@EXAMPLE.COM', [
+    'meera.kapoor@example.com',
+  ]);
+  assert.equal(duplicate.status, 'duplicate');
+  assert.equal(duplicate.normalizedEmail, 'meera.kapoor@example.com');
+  assert.ok(duplicate.message?.includes('already subscribed'));
+});
+
+test('lookupGuestOrder validates inputs, normalizes order ID & email, and rejects mismatched pairs', () => {
+  const sampleOrders: Order[] = [
+    {
+      id: 'ord-demo-1002',
+      orderNumber: 'AKS-2611-1002',
+      invoiceNumber: 'GST/26-27/1002',
+      userId: 'guest',
+      customerName: 'Rohan Malhotra',
+      customerEmail: 'rohan.m@example.com',
+      customerPhone: '9810998877',
+      shippingAddress: {
+        label: 'Home',
+        fullName: 'Rohan Malhotra',
+        phone: '9810998877',
+        line1: '42 Jor Bagh',
+        city: 'New Delhi',
+        state: 'Delhi',
+        pincode: '110003',
+      },
+      deliveryMethod: 'express',
+      items: [],
+      subtotal: 18990,
+      mrpTotal: 22990,
+      couponDiscount: 0,
+      shippingFee: 349,
+      codFee: 0,
+      taxableValue: 16093,
+      gstAmount: 2897,
+      total: 19339,
+      status: 'shipped',
+      payment: {
+        id: 'pay-2',
+        method: 'card',
+        provider: 'razorpay_demo',
+        mode: 'DEMO',
+        status: 'demo_authorized',
+        amount: 19339,
+        referenceId: 'DEMO-CARD-2',
+        paidAt: '2026-11-19T15:10:00Z',
+      },
+      shipment: {
+        carrier: 'BlueDart Priority',
+        awbNumber: 'BD261102IN',
+        estimatedDelivery: 'Mon, 23 Nov',
+        events: [],
+      },
+      createdAt: '2026-11-19T15:10:00Z',
+      isDemoOrder: true,
+    },
+  ];
+
+  const missingId = lookupGuestOrder(sampleOrders, '  ', 'rohan.m@example.com');
+  assert.equal(missingId.ok, false);
+  assert.equal(missingId.field, 'orderId');
+
+  const badEmail = lookupGuestOrder(sampleOrders, 'AKS-2611-1002', 'not-an-email');
+  assert.equal(badEmail.ok, false);
+  assert.equal(badEmail.field, 'email');
+
+  const wrongEmail = lookupGuestOrder(sampleOrders, 'AKS-2611-1002', 'other@example.com');
+  assert.equal(wrongEmail.ok, false);
+  assert.equal(wrongEmail.field, 'lookup');
+
+  const matched = lookupGuestOrder(sampleOrders, ' #aks-2611-1002 ', ' ROHAN.M@EXAMPLE.COM ');
+  assert.equal(matched.ok, true);
+  assert.equal(matched.order?.id, 'ord-demo-1002');
+
+  const shippedInfo = getOrderProgressInfo('shipped');
+  assert.equal(shippedInfo.activeStageIndex, 2);
+  assert.equal(shippedInfo.isException, false);
+
+  const cancelledInfo = getOrderProgressInfo('cancelled');
+  assert.equal(cancelledInfo.activeStageIndex, -1);
+  assert.equal(cancelledInfo.isException, true);
+});
+
+test('validateProductReview enforces authentication, star bounds, and text length', () => {
+  const guest = validateProductReview({
+    isAuthenticated: true && false,
+    rating: 5,
+    title: 'Great blazer',
+    comment: 'Excellent drape and stitching.',
+  });
+  assert.equal(guest.valid, false);
+  assert.equal(guest.field, 'auth');
+
+  const badRating = validateProductReview({
+    isAuthenticated: true,
+    rating: 0,
+    title: 'Great blazer',
+    comment: 'Excellent drape and stitching.',
+  });
+  assert.equal(badRating.valid, false);
+  assert.equal(badRating.field, 'rating');
+
+  const shortTitle = validateProductReview({
+    isAuthenticated: true,
+    rating: 4,
+    title: 'Ok',
+    comment: 'Excellent drape and stitching.',
+  });
+  assert.equal(shortTitle.valid, false);
+  assert.equal(shortTitle.field, 'title');
+
+  const shortComment = validateProductReview({
+    isAuthenticated: true,
+    rating: 4,
+    title: 'Lovely linen',
+    comment: 'Too short',
+  });
+  assert.equal(shortComment.valid, false);
+  assert.equal(shortComment.field, 'comment');
+
+  const valid = validateProductReview({
+    isAuthenticated: true,
+    rating: 5,
+    title: 'Refined tailoring',
+    comment: 'Breathable Belgian linen with clean structured shoulders.',
+  });
+  assert.equal(valid.valid, true);
+});
+
+test('getRatingDistribution and filterAndSortReviews aggregate, filter, and sort accurately', () => {
+  const sampleReviews: Review[] = [
+    {
+      id: 'r1',
+      productId: 'p1',
+      userId: 'u1',
+      authorName: 'Meera',
+      city: 'Mumbai',
+      rating: 5,
+      title: 'Superb',
+      comment: 'Loved the weave and fit.',
+      verifiedPurchase: true,
+      status: 'approved',
+      createdAt: '2026-11-10T10:00:00Z',
+    },
+    {
+      id: 'r2',
+      productId: 'p1',
+      userId: 'u2',
+      authorName: 'Rohan',
+      city: 'Delhi',
+      rating: 4,
+      title: 'Very good',
+      comment: 'Clean silhouette, slightly relaxed.',
+      verifiedPurchase: false,
+      status: 'approved',
+      createdAt: '2026-11-18T10:00:00Z',
+    },
+    {
+      id: 'r3',
+      productId: 'p1',
+      userId: 'u3',
+      authorName: 'Pending',
+      city: 'Pune',
+      rating: 1,
+      title: 'Pending moderation',
+      comment: 'Should not count while pending.',
+      verifiedPurchase: false,
+      status: 'pending',
+      createdAt: '2026-11-20T10:00:00Z',
+    },
+  ];
+
+  const dist = getRatingDistribution('p1', sampleReviews);
+  assert.equal(dist.length, 5);
+  assert.equal(dist[0].stars, 5);
+  assert.equal(dist[0].count, 1);
+  assert.equal(dist[0].percentage, 50);
+  assert.equal(dist[1].stars, 4);
+  assert.equal(dist[1].count, 1);
+  assert.equal(dist[1].percentage, 50);
+  assert.equal(dist[4].stars, 1);
+  assert.equal(dist[4].count, 0);
+
+  const approvedOnly = sampleReviews.filter((r) => r.status === 'approved');
+  const lowestFirst = filterAndSortReviews(approvedOnly, { starFilter: null, sortBy: 'lowest' });
+  assert.equal(lowestFirst[0].id, 'r2');
+
+  const fiveStarOnly = filterAndSortReviews(approvedOnly, { starFilter: 5, sortBy: 'newest' });
+  assert.equal(fiveStarOnly.length, 1);
+  assert.equal(fiveStarOnly[0].id, 'r1');
+});
+
+
+
