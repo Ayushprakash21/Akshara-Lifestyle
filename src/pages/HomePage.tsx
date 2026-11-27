@@ -182,7 +182,7 @@ export function HomePage() {
                   </p>
                 </div>
                 <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#F7F4EE] font-medium">{review.userName}</span>
+                  <span className="text-[#F7F4EE] font-medium">{review.authorName}</span>
                   <span className="text-[#C5A46D] flex items-center gap-1 text-[10px]">
                     <ShieldCheck className="w-3 h-3" /> VERIFIED
                   </span>

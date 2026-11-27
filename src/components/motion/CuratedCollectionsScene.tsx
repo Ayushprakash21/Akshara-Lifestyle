@@ -131,7 +131,7 @@ export function CuratedCollectionsScene() {
               }`}
             >
               <span className="text-[10px] font-mono opacity-70">0{idx + 1}</span>
-              <span>{prod.category}</span>
+              <span className="capitalize">{prod.categorySlug}</span>
             </button>
           ))}
         </div>
@@ -162,7 +162,7 @@ export function CuratedCollectionsScene() {
 
             {/* Corner SKU / Category Badges */}
             <div className="absolute top-6 left-6 text-[10px] font-mono tracking-[0.25em] text-[#C5A46D] uppercase">
-              {activeProduct.category}
+              {activeProduct.categorySlug}
             </div>
 
             <div className="absolute bottom-6 left-6 text-[10px] font-mono tracking-[0.25em] text-[#8C8478] uppercase">
@@ -239,7 +239,7 @@ export function CuratedCollectionsScene() {
                     <div className="flex flex-wrap gap-2">
                       {activeProduct.variants.map((v) => {
                         const isSelected = v.id === selectedVariantId;
-                        const label = v.colorName || v.size || v.name || v.sku;
+                        const label = v.colorName || v.size || v.sku;
                         return (
                           <button
                             key={v.id}
